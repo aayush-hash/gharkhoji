@@ -1,6 +1,8 @@
 # GharKhoji — Day 1 Guide
 
-Goal for today: one command starts the whole backend (API + Postgres/PostGIS + Redis + MinIO), and you can log in with a phone number through `http://localhost:8000/docs`.
+> **Day 2 guide → [DAY2.md](DAY2.md)** (listings, photos, search)
+
+Goal for today: one command starts the whole backend (API + Postgres/PostGIS + Redis), and you can log in with a phone number through `http://localhost:8000/docs`.
 
 The backend code for Day 1 is already written and tested (24 tests passing). Your job today is to set up your laptop, run it, understand every file, and push it to GitHub.
 
@@ -15,7 +17,7 @@ WSL2 gives you a real Linux inside Windows. Backend work is much smoother there.
 2. Run:
    ```powershell
    wsl --install -d Ubuntu-24.04
-   `
+   ```
 3. **Restart** your laptop.
 4. Ubuntu opens by itself and asks for a **username and password** (for Linux only; the password won't show while typing — that's normal).
 5. Update Ubuntu:
@@ -107,7 +109,6 @@ You should see `Running upgrade -> 0001` (the migration) and `Uvicorn running on
 Open in your Windows browser:
 - http://localhost:8000/health → `{"status":"ok","database":"ok","redis":"ok"}`
 - http://localhost:8000/docs → interactive API page
-- http://localhost:9001 → MinIO console (login `minioadmin` / `minioadmin`), you should see 2 buckets
 
 ### Step 12. Log in with a phone number (in /docs)
 1. `POST /api/v1/auth/otp/request` → **Try it out** → body `{"phone": "9812345678"}` → Execute.
@@ -144,7 +145,7 @@ Read the files in this order. Each one is short.
 
 | # | File | What it does |
 |---|---|---|
-| 1 | `docker-compose.yml` | The 5 services and how they connect. Note: inside Docker the database host is `db`, not `localhost`. |
+| 1 | `docker-compose.yml` | The 3 services and how they connect. Note: inside Docker the database host is `db`, not `localhost`. |
 | 2 | `backend/app/core/config.py` | All settings come from environment variables. Nothing secret is hard-coded. |
 | 3 | `backend/app/core/database.py` | Async DB engine, `Base` class, `id` and timestamp columns every table reuses. |
 | 4 | `backend/app/modules/users/models.py` | The `users` table: phone, role (tenant/owner/agent/admin), language (en/ne). |

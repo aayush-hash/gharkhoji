@@ -33,12 +33,23 @@ class Settings(BaseSettings):
     OTP_MAX_PER_HOUR_PER_IP: int = 20
     OTP_MAX_VERIFY_ATTEMPTS: int = 5
 
-    # Object storage (MinIO locally, Cloudflare R2 in production) — used from Day 2
-    S3_ENDPOINT_URL: str = "http://localhost:9000"
-    S3_ACCESS_KEY: str = "minioadmin"
-    S3_SECRET_KEY: str = "minioadmin"
+    # Base URL the phone uses to reach this API. On Day 3 set it to your laptop's
+    # Wi-Fi IP (e.g. http://192.168.1.10:8000) so the phone can load photos.
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
+
+    # Photo storage: "local" = files on disk (development), "s3" = Cloudflare R2 / AWS S3 (production)
+    STORAGE_BACKEND: Literal["local", "s3"] = "local"
+    MEDIA_ROOT: str = "media_uploads"
+    UPLOAD_URL_EXPIRE_SECONDS: int = 600
+    MAX_PHOTOS_PER_LISTING: int = 8
+    MAX_PHOTO_BYTES: int = 10 * 1024 * 1024  # 10 MB
+
+    S3_ENDPOINT_URL: str = ""          # R2: https://<account_id>.r2.cloudflarestorage.com
+    S3_REGION: str = "auto"
+    S3_ACCESS_KEY: str = ""
+    S3_SECRET_KEY: str = ""
     S3_PUBLIC_BUCKET: str = "gharkhoji-public"
-    S3_PRIVATE_BUCKET: str = "gharkhoji-private"
+    S3_PUBLIC_BASE_URL: str = ""       # public URL where bucket files are served (R2 custom domain)
 
     @property
     def is_production(self) -> bool:

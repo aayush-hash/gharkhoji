@@ -17,7 +17,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app # live reload: edit code on your laptop, server restarts
+      - ./backend:/app          # live reload: edit code on your laptop, server restarts
     depends_on:
       db:
         condition: service_healthy
@@ -35,8 +35,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/scripts/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
-      
     healthcheck:
+      # -h 127.0.0.1 checks the real network port, so it only passes after Postgres's first-time setup restart
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d gharkhoji"]
       interval: 5s
       timeout: 3s

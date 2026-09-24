@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.redis import get_redis
 from app.core.security import TokenError, decode_token
+from app.core.storage import Storage, get_storage
 from app.modules.users.models import User, UserRole
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
@@ -40,6 +41,23 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_optional_user(
+    db: DbSession,
+    creds: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+) -> User | None:
+    """For public endpoints: browsing never requires login, but we use the user if logged in."""
+    if creds is None:
+        return None
+    try:
+        return await get_current_user(db, creds)
+    except HTTPException:
+        return None
+
+
+OptionalUser = Annotated[User | None, Depends(get_optional_user)]
+StorageDep = Annotated[Storage, Depends(get_storage)]
 
 
 def require_roles(*roles: UserRole):

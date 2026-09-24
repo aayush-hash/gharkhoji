@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 # Point the app at the TEST database and a separate Redis DB *before* importing it.
 os.environ["ENVIRONMENT"] = "test"
@@ -8,6 +9,8 @@ os.environ.setdefault(
 os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 os.environ["REDIS_URL"] = os.environ.get("TEST_REDIS_URL", "redis://localhost:6379/15")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-1234567890")
+os.environ["STORAGE_BACKEND"] = "local"
+os.environ["MEDIA_ROOT"] = tempfile.mkdtemp(prefix="gharkhoji-test-media-")
 
 import pytest  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
@@ -79,3 +82,19 @@ async def login(client, captured_sms):
         return r.json()
 
     return _login
+
+
+@pytest.fixture
+async def make_user(client, login):
+    """Creates a logged-in user with a role. Returns {"headers": ..., "user": ...}."""
+    counter = iter(range(10_000_000, 99_999_999))
+
+    async def _make(role: str = "owner", name: str = "Test User") -> dict:
+        phone = f"98{next(counter)}"
+        tokens = await login(phone)
+        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+        r = await client.patch("/api/v1/users/me", headers=headers, json={"full_name": name, "role": role})
+        assert r.status_code == 200, r.text
+        return {"headers": headers, "user": r.json()}
+
+    return _make

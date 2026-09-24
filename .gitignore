@@ -26,3 +26,6 @@ web-build/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Uploaded photos in development (local storage)
+backend/media_uploads/
