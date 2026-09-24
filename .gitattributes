@@ -1,0 +1,5 @@
+# Keep Linux line endings everywhere. Without this, Windows can add CRLF to
+# shell scripts and SQL files, which breaks them inside Docker containers.
+* text=auto eol=lf
+*.png binary
+*.jpg binary

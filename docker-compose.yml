@@ -1,0 +1,57 @@
+# Local development stack. Start everything with:  docker compose up --build
+services:
+  api:
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV: "true"
+    env_file: ./backend/.env
+    environment:
+      # Inside Docker, services reach each other by service name, not "localhost"
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/gharkhoji
+      REDIS_URL: redis://redis:6379/0
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/gharkhoji_test
+      TEST_REDIS_URL: redis://redis:6379/15
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    restart: on-failure
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app # live reload: edit code on your laptop, server restarts
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gharkhoji
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/scripts/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d gharkhoji"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
