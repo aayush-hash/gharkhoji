@@ -1,0 +1,143 @@
+{
+  "common": {
+    "continue": "Continue",
+    "retry": "Try again",
+    "loading": "Loading…",
+    "networkError": "Can't reach the server. Check your internet and that the backend is running.",
+    "somethingWrong": "Something went wrong"
+  },
+  "welcome": {
+    "title": "GharKhoji",
+    "tagline": "Find a real room that is actually available today.",
+    "chooseLanguage": "Choose your language"
+  },
+  "tabs": {
+    "home": "Home",
+    "profile": "Profile"
+  },
+  "home": {
+    "title": "Find your room",
+    "where": "Where do you want to live?",
+    "budget": "Monthly budget",
+    "anyBudget": "Any",
+    "upTo": "Up to {{amount}}",
+    "type": "Type",
+    "anyType": "Any",
+    "search": "Search rooms",
+    "freshest": "Recently confirmed available",
+    "seeAll": "See all"
+  },
+  "search": {
+    "title": "Rooms",
+    "results": "{{count}} available",
+    "empty": "No rooms match. Try a bigger area or budget.",
+    "within": "Within {{km}} km of {{place}}",
+    "sort": {
+      "freshness": "Freshest",
+      "price_low": "Cheapest",
+      "price_high": "Most expensive",
+      "distance": "Nearest"
+    }
+  },
+  "listing": {
+    "perMonth": "/month",
+    "totalMonthly": "Estimated total per month",
+    "rent": "Rent",
+    "water": "Water",
+    "waste": "Waste",
+    "internet": "Internet",
+    "parking": "Parking",
+    "deposit": "Deposit",
+    "commission": "Agent commission",
+    "amenities": "Facilities",
+    "details": "Details",
+    "furnishing": "Furnishing",
+    "floor": "Floor",
+    "occupants": "Max people",
+    "availableFrom": "Available from",
+    "location": "Location",
+    "approxLocation": "Exact address is shared after your visit is accepted.",
+    "listedBy": "Listed by",
+    "phoneVerified": "Phone verified",
+    "contactSoon": "Contacting owners is coming soon",
+    "loginToContact": "Log in to contact"
+  },
+  "fresh": {
+    "confirmed": "Confirmed available {{ago}}",
+    "never": "Availability not confirmed"
+  },
+  "time": {
+    "minutes_one": "{{count}} minute ago",
+    "minutes_other": "{{count}} minutes ago",
+    "hours_one": "{{count}} hour ago",
+    "hours_other": "{{count}} hours ago",
+    "days_one": "{{count}} day ago",
+    "days_other": "{{count}} days ago"
+  },
+  "types": {
+    "room": "Room",
+    "1bhk": "1BHK",
+    "2bhk": "2BHK",
+    "3bhk": "3BHK",
+    "flat": "Flat"
+  },
+  "roles": {
+    "tenant": "Tenant",
+    "owner": "Owner",
+    "agent": "Agent",
+    "admin": "Admin"
+  },
+  "furnishing": {
+    "unfurnished": "Unfurnished",
+    "semi": "Semi-furnished",
+    "full": "Fully furnished"
+  },
+  "amenities": {
+    "water_24h": "24h water",
+    "drinking_water": "Drinking water",
+    "attached_bathroom": "Attached bathroom",
+    "kitchen": "Kitchen",
+    "balcony": "Balcony",
+    "sunlight": "Sunny",
+    "bike_parking": "Bike parking",
+    "car_parking": "Car parking",
+    "internet": "Internet",
+    "separate_meter": "Separate meter",
+    "hot_water": "Hot water",
+    "pets_allowed": "Pets allowed",
+    "road_access": "Road access",
+    "near_public_transport": "Near bus stop"
+  },
+  "auth": {
+    "loginTitle": "Log in with your phone",
+    "loginHint": "We'll send a 6-digit code by SMS.",
+    "phone": "Mobile number",
+    "sendCode": "Send code",
+    "verifyTitle": "Enter the code",
+    "verifyHint": "Sent to {{phone}}",
+    "verify": "Verify",
+    "resendIn": "Resend code in {{seconds}}s",
+    "resend": "Resend code",
+    "invalidPhone": "Enter a 10-digit number starting with 97 or 98"
+  },
+  "onboarding": {
+    "title": "Tell us about you",
+    "name": "Your name",
+    "namePlaceholder": "e.g. Sita Sharma",
+    "iAm": "I am a…",
+    "tenantDesc": "Looking for a room or flat",
+    "ownerDesc": "I own a property to rent out",
+    "agentDesc": "I help owners find tenants (commission shown publicly)",
+    "roleNote": "You can't switch between owner and agent later without verification.",
+    "finish": "Finish"
+  },
+  "profile": {
+    "title": "Profile",
+    "guestTitle": "Browse freely",
+    "guestText": "You don't need an account to search. Log in to post a room or contact owners.",
+    "login": "Log in",
+    "language": "Language",
+    "logout": "Log out",
+    "role": "Account type"
+  }
+}
