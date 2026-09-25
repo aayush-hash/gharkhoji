@@ -6,7 +6,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useTranslation } from 'react-i18next';
 
 import { useDeletePhoto, useListing, useListingAction, useReorderPhotos } from '../../../api/hooks';
-import { Button, ErrorView, Loading, useErrorText } from '../../../components/ui';
+import { Button, ErrorView, Icon, Loading, useErrorText } from '../../../components/ui';
 import { colors, radius, space } from '../../../lib/theme';
 import { pickPhotos, takePhoto, uploadPhoto } from '../../../lib/upload';
 
@@ -31,19 +31,22 @@ export default function ListingPhotos() {
   const upload = async (uris: string[]) => {
     setProgress({ done: 0, total: uris.length });
     let failed = 0;
+    let firstError: unknown = null;
     for (const [i, uri] of uris.entries()) {
       try {
         const updated = await uploadPhoto(id, uri);
         qc.setQueryData(['listing', id], updated); // show each photo as soon as it's in
       } catch (err) {
         failed += 1;
+        firstError ??= err;
         console.log('Upload failed', err);
       }
       setProgress({ done: i + 1, total: uris.length });
     }
     setProgress(null);
     qc.invalidateQueries({ queryKey: ['my-listings'] });
-    if (failed) Alert.alert(t('photos.someFailed', { count: failed }));
+    qc.invalidateQueries({ queryKey: ['listing', id] }); // refresh the free slot count
+    if (failed) Alert.alert(t('photos.someFailed', { count: failed }), errorText(firstError));
   };
 
   const addFromLibrary = async () => {
@@ -92,7 +95,7 @@ export default function ListingPhotos() {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>📷 {t('photos.title')}</Text>
+        <Text style={styles.title}>{t('photos.title')}</Text>
         <Text style={styles.hint}>{t('photos.hint', { count: slotsLeft })}</Text>
 
         <View style={styles.grid}>
@@ -105,11 +108,11 @@ export default function ListingPhotos() {
                 </View>
               ) : (
                 <Pressable style={styles.coverBtn} onPress={() => makeCover(p.id)}>
-                  <Text style={styles.coverBtnText}>★</Text>
+                  <Icon name="star" size={14} color="#FACC15" />
                 </Pressable>
               )}
               <Pressable style={styles.deleteBtn} onPress={() => confirmDelete(p.id)}>
-                <Text style={styles.deleteText}>✕</Text>
+                <Icon name="close" size={16} color="#fff" />
               </Pressable>
             </View>
           ))}
@@ -117,24 +120,24 @@ export default function ListingPhotos() {
 
         {progress ? (
           <Text style={styles.progress}>
-            ⏳ {t('photos.uploading', { done: progress.done, total: progress.total })}
+            {t('photos.uploading', { done: progress.done, total: progress.total })}
           </Text>
         ) : null}
 
         {slotsLeft > 0 ? (
           <View style={{ gap: space.sm, marginTop: space.lg }}>
-            <Button title={`🖼 ${t('photos.fromLibrary')}`} variant="outline" onPress={addFromLibrary}
+            <Button title={t('photos.fromLibrary')} icon="images" variant="secondary" onPress={addFromLibrary}
               disabled={!!progress} />
-            <Button title={`📸 ${t('photos.fromCamera')}`} variant="outline" onPress={addFromCamera}
+            <Button title={t('photos.fromCamera')} icon="camera" variant="secondary" onPress={addFromCamera}
               disabled={!!progress} />
           </View>
         ) : null}
-        <Text style={styles.tip}>💡 {t('photos.tip')}</Text>
+        <Text style={styles.tip}>{t('photos.tip')}</Text>
       </ScrollView>
 
       <View style={styles.footer}>
         {canPublish ? (
-          <Button title={`🚀 ${t('photos.publish')}`} onPress={publish} loading={action.isPending}
+          <Button title={t('photos.publish')} icon="rocket" onPress={publish} loading={action.isPending}
             disabled={l.photos.length === 0 || !!progress} />
         ) : (
           <Button title={t('photos.done')} onPress={() => router.back()} disabled={!!progress} />

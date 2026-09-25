@@ -10,6 +10,7 @@ os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 os.environ["REDIS_URL"] = os.environ.get("TEST_REDIS_URL", "redis://localhost:6379/15")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-1234567890")
 os.environ["STORAGE_BACKEND"] = "local"
+# Tests must not depend on your laptop's .env (e.g. your Wi-Fi IP in PUBLIC_BASE_URL)
 os.environ["PUBLIC_BASE_URL"] = "http://localhost:8000"
 os.environ["MEDIA_ROOT"] = tempfile.mkdtemp(prefix="gharkhoji-test-media-")
 
@@ -71,31 +72,69 @@ def otp_from(sms: list[tuple[str, str]]) -> str:
     return re.search(r"\b(\d{6})\b", sms[-1][1]).group(1)
 
 
+TEST_PASSWORD = "safe-pass-123"
+
+
 @pytest.fixture
-async def login(client, captured_sms):
-    """Returns a function that logs a phone number in and gives back the JSON response."""
+async def verify_phone(client, captured_sms):
+    """SMS-code step: returns the one-time verification token for signup/reset."""
+
+    async def _verify(phone: str, purpose: str = "signup") -> str:
+        from app.core.redis import redis_client
+
+        await redis_client.delete(f"otp:cooldown:{normalize(phone)}")  # simulate waiting between tests
+        r = await client.post("/api/v1/auth/otp/request", json={"phone": phone, "purpose": purpose})
+        assert r.status_code == 200, r.text
+        r = await client.post(
+            "/api/v1/auth/otp/verify", json={"phone": phone, "purpose": purpose, "code": otp_from(captured_sms)}
+        )
+        assert r.status_code == 200, r.text
+        return r.json()["verification_token"]
+
+    return _verify
+
+
+def normalize(phone: str) -> str:
+    from app.modules.auth.schemas import normalize_nepal_phone
+
+    return normalize_nepal_phone(phone)
+
+
+@pytest.fixture
+async def register(client, verify_phone):
+    """Creates an account the real way (SMS code → register). Returns the login JSON."""
+
+    async def _register(
+        phone: str = "9812345678", role: str = "tenant", name: str = "Test User", password: str = TEST_PASSWORD
+    ) -> dict:
+        token = await verify_phone(phone, "signup")
+        r = await client.post(
+            "/api/v1/auth/register",
+            json={"verification_token": token, "full_name": name, "role": role, "password": password},
+        )
+        assert r.status_code == 201, r.text
+        return r.json()
+
+    return _register
+
+
+@pytest.fixture
+async def login(register):
+    """A signed-up tenant, logged in. Returns the login JSON (tokens + user)."""
 
     async def _login(phone: str = "9812345678") -> dict:
-        r = await client.post("/api/v1/auth/otp/request", json={"phone": phone})
-        assert r.status_code == 200, r.text
-        r = await client.post("/api/v1/auth/otp/verify", json={"phone": phone, "code": otp_from(captured_sms)})
-        assert r.status_code == 200, r.text
-        return r.json()
+        return await register(phone)
 
     return _login
 
 
 @pytest.fixture
-async def make_user(client, login):
+async def make_user(register):
     """Creates a logged-in user with a role. Returns {"headers": ..., "user": ...}."""
     counter = iter(range(10_000_000, 99_999_999))
 
     async def _make(role: str = "owner", name: str = "Test User") -> dict:
-        phone = f"98{next(counter)}"
-        tokens = await login(phone)
-        headers = {"Authorization": f"Bearer {tokens['access_token']}"}
-        r = await client.patch("/api/v1/users/me", headers=headers, json={"full_name": name, "role": role})
-        assert r.status_code == 200, r.text
-        return {"headers": headers, "user": r.json()}
+        data = await register(f"98{next(counter)}", role=role, name=name)
+        return {"headers": {"Authorization": f"Bearer {data['access_token']}"}, "user": data["user"]}
 
     return _make

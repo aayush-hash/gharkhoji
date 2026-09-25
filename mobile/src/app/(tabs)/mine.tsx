@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type ListingAction, useDeleteListing, useListingAction, useMyListings } from '../../api/hooks';
 import { FreshnessBadge } from '../../components/badges';
-import { Badge, Button, ErrorView, Loading, useErrorText } from '../../components/ui';
+import { Badge, Button, EmptyState, ErrorView, Icon, type IconName, Loading, useErrorText } from '../../components/ui';
 import { useAuth } from '../../lib/auth';
 import { formatRs } from '../../lib/format';
 import { colors, radius, space } from '../../lib/theme';
@@ -27,9 +27,8 @@ export default function MyListings() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.center}>
-        <Text style={styles.emptyTitle}>🏠 {t('mine.loginTitle')}</Text>
-        <Button title={t('profile.login')} onPress={() => router.push('/login')} style={{ alignSelf: 'stretch' }} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+        <EmptyState icon="home" title={t('mine.loginTitle')} action={t('profile.login')} onAction={() => router.push('/auth/login')} />
       </SafeAreaView>
     );
   }
@@ -40,12 +39,13 @@ export default function MyListings() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.title}>{t('mine.title')}</Text>
-        <Button title={`+ ${t('mine.post')}`} onPress={() => router.push('/post')} style={styles.postBtn} />
+        <Button title={t('mine.post')} icon="add" size="md" onPress={() => router.push('/post')} />
       </View>
 
       {needAttention > 0 ? (
         <View style={styles.banner}>
-          <Text style={styles.bannerText}>⏰ {t('mine.needAttention', { count: needAttention })}</Text>
+          <Icon name="alarm" size={18} color={colors.ok} />
+          <Text style={styles.bannerText}>{t('mine.needAttention', { count: needAttention })}</Text>
         </View>
       ) : null}
 
@@ -58,14 +58,17 @@ export default function MyListings() {
           data={query.data}
           keyExtractor={(i) => i.id}
           renderItem={({ item }) => <MyListingRow item={item} />}
-          contentContainerStyle={{ padding: space.lg }}
+          contentContainerStyle={{ padding: space.lg, paddingBottom: 120, flexGrow: 1 }}
           refreshing={query.isRefetching}
           onRefresh={() => query.refetch()}
           ListEmptyComponent={
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>{t('mine.empty')}</Text>
-              <Text style={styles.muted}>{t('mine.emptyHint')}</Text>
-            </View>
+            <EmptyState
+              icon="add-circle-outline"
+              title={t('mine.empty')}
+              text={t('mine.emptyHint')}
+              action={t('post.newTitle')}
+              onAction={() => router.push('/post')}
+            />
           }
         />
       )}
@@ -102,7 +105,7 @@ function MyListingRow({ item }: { item: ListingCard }) {
           <Image source={item.cover_photo_url} style={styles.thumb} contentFit="cover" />
         ) : (
           <View style={[styles.thumb, styles.noThumb]}>
-            <Text>📷</Text>
+            <Icon name="image-outline" size={22} color={colors.primaryTint} />
           </View>
         )}
         <View style={{ flex: 1 }}>
@@ -120,9 +123,9 @@ function MyListingRow({ item }: { item: ListingCard }) {
         <View style={styles.question}>
           <Text style={styles.questionText}>{t('mine.stillAvailable')}</Text>
           <View style={styles.actions}>
-            <Button title={`✅ ${t('mine.yes')}`} onPress={() => run('confirm-available')} loading={action.isPending}
+            <Button icon="checkmark-circle" size="md" title={t('mine.yes')} onPress={() => run('confirm-available')} loading={action.isPending}
               style={styles.flexBtn} />
-            <Button title={`🏠 ${t('mine.rented')}`} variant="outline" onPress={askRented} style={styles.flexBtn} />
+            <Button icon="key" size="md" title={t('mine.rented')} variant="outline" onPress={askRented} style={styles.flexBtn} />
           </View>
         </View>
       ) : null}
@@ -130,27 +133,38 @@ function MyListingRow({ item }: { item: ListingCard }) {
       <View style={styles.actions}>
         {item.status === 'active' && !item.needs_confirmation ? (
           <>
-            <SmallAction label={`✅ ${t('mine.confirm')}`} onPress={() => run('confirm-available')} />
-            <SmallAction label={`🏠 ${t('mine.rented')}`} onPress={askRented} />
+            <SmallAction icon="checkmark-circle" label={t('mine.confirm')} onPress={() => run('confirm-available')} />
+            <SmallAction icon="key" label={t('mine.rented')} onPress={askRented} />
           </>
         ) : null}
         {item.status === 'draft' || item.status === 'rented' ? (
-          <SmallAction label={`🚀 ${t('photos.publish')}`} onPress={() => router.push(`/listing/${item.id}/photos`)} />
+          <SmallAction icon="rocket" label={t('photos.publish')} onPress={() => router.push(`/listing/${item.id}/photos`)} />
         ) : null}
         {item.status !== 'rented' ? (
-          <SmallAction label={`✏️ ${t('mine.edit')}`} onPress={() => router.push(`/listing/${item.id}/edit`)} />
+          <SmallAction icon="create" label={t('mine.edit')} onPress={() => router.push(`/listing/${item.id}/edit`)} />
         ) : null}
-        <SmallAction label={`📷 ${item.photo_count}`} onPress={() => router.push(`/listing/${item.id}/photos`)} />
-        <SmallAction label="🗑" onPress={askDelete} />
+        <SmallAction icon="images" label={String(item.photo_count)} onPress={() => router.push(`/listing/${item.id}/photos`)} />
+        <SmallAction icon="trash" onPress={askDelete} danger />
       </View>
     </View>
   );
 }
 
-function SmallAction({ label, onPress }: { label: string; onPress: () => void }) {
+function SmallAction({
+  label,
+  icon,
+  onPress,
+  danger,
+}: {
+  label?: string;
+  icon: IconName;
+  onPress: () => void;
+  danger?: boolean;
+}) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.small, pressed && { opacity: 0.6 }]}>
-      <Text style={styles.smallText}>{label}</Text>
+      <Icon name={icon} size={15} color={danger ? colors.danger : colors.primary} />
+      {label ? <Text style={styles.smallText}>{label}</Text> : null}
     </Pressable>
   );
 }
@@ -161,15 +175,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: space.lg, paddingTop: space.md,
   },
-  title: { fontSize: 26, fontWeight: '800', color: colors.text },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text, letterSpacing: -0.4 },
   postBtn: { height: 40, paddingHorizontal: space.lg },
   banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
     backgroundColor: colors.okBg, marginHorizontal: space.lg, marginTop: space.md,
     padding: space.md, borderRadius: radius.md,
   },
-  bannerText: { color: colors.ok, fontWeight: '700' },
+  bannerText: { color: colors.ok, fontWeight: '700', flex: 1 },
   card: {
-    backgroundColor: colors.card, borderRadius: radius.lg, padding: space.md, marginBottom: space.md,
+    backgroundColor: colors.card, borderRadius: radius.xl, padding: space.md, marginBottom: space.md,
     borderWidth: 1, borderColor: colors.border,
   },
   cardAttention: { borderColor: colors.ok, borderWidth: 2 },
@@ -184,6 +201,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: space.sm, marginTop: space.sm, flexWrap: 'wrap' },
   flexBtn: { flex: 1, height: 44, paddingHorizontal: space.sm },
   small: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: space.md, paddingVertical: space.sm, borderRadius: radius.pill,
     backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border,
   },

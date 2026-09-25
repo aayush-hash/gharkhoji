@@ -1,4 +1,21 @@
-# Local development stack. Start everything with:  docker compose up --build
+# Local development stack.
+#   First time only:  ./scripts/generate-secrets.sh     (creates .env with strong random passwords)
+#   Then:             docker compose up --build
+#
+# Security:
+#   - Postgres and Redis both require passwords (from the .env file next to this one).
+#   - The API connects as "gharkhoji_app", a normal user that owns only the GharKhoji
+#     databases — not the "postgres" superuser.
+#   - Postgres is reachable only from this computer (127.0.0.1), not from your Wi-Fi.
+#     Redis isn't reachable from outside Docker at all.
+
+x-backend-env: &backend-env
+  # Inside Docker, services reach each other by service name, not "localhost"
+  DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-gharkhoji_app}:${APP_DB_PASSWORD:?Run ./scripts/generate-secrets.sh first}@db:5432/gharkhoji
+  REDIS_URL: redis://:${REDIS_PASSWORD:?Run ./scripts/generate-secrets.sh first}@redis:6379/0
+  TEST_DATABASE_URL: postgresql+asyncpg://${APP_DB_USER:-gharkhoji_app}:${APP_DB_PASSWORD}@db:5432/gharkhoji_test
+  TEST_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/15
+
 services:
   api:
     build:
@@ -6,12 +23,7 @@ services:
       args:
         INSTALL_DEV: "true"
     env_file: ./backend/.env
-    environment:
-      # Inside Docker, services reach each other by service name, not "localhost"
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/gharkhoji
-      REDIS_URL: redis://redis:6379/0
-      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/gharkhoji_test
-      TEST_REDIS_URL: redis://redis:6379/15
+    environment: *backend-env
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     restart: on-failure
     ports:
@@ -24,16 +36,14 @@ services:
       redis:
         condition: service_healthy
 
-  # Background jobs: freshness reminders + auto-expiry (Day 4)
+  # Background jobs: freshness reminders + auto-expiry
   worker:
     build:
       context: ./backend
       args:
         INSTALL_DEV: "true"
     env_file: ./backend/.env
-    environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/gharkhoji
-      REDIS_URL: redis://redis:6379/0
+    environment: *backend-env
     command: python -m app.workers.main
     restart: on-failure
     volumes:
@@ -48,13 +58,16 @@ services:
     image: postgis/postgis:16-3.4
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run ./scripts/generate-secrets.sh first}
       POSTGRES_DB: gharkhoji
-    ports:
-      - "5432:5432"
+      # Passwords are checked with SCRAM-SHA-256 (never sent or stored in plain text)
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      APP_DB_USER: ${APP_DB_USER:-gharkhoji_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./backend/scripts/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+      # Runs once, on first start: creates the app user and the test database
+      - ./backend/scripts/db-init.sh:/docker-entrypoint-initdb.d/20-gharkhoji.sh:ro
     healthcheck:
       # -h 127.0.0.1 checks the real network port, so it only passes after Postgres's first-time setup restart
       test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d gharkhoji"]
@@ -65,10 +78,12 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --protected-mode yes"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    # no "ports:" — only the api and worker containers can reach Redis
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
       interval: 5s
       timeout: 3s
       retries: 10

@@ -136,7 +136,7 @@ export function ListingForm({
         error={errors.title} maxLength={120} />
 
       {/* ---------- Money: the "no surprises" section ---------- */}
-      <SectionTitle>💰 {t('post.money')}</SectionTitle>
+      <SectionTitle>{t('post.money')}</SectionTitle>
       <View style={styles.row}>
         <View style={styles.half}>
           <Field label={t('listing.rent')} value={rent} onChangeText={setRent} keyboardType="number-pad"
@@ -167,7 +167,7 @@ export function ListingForm({
         </View>
       </View>
       {isAgent ? (
-        <Field label={`🟠 ${t('listing.commission')}`} value={commission} onChangeText={setCommission}
+        <Field label={t('listing.commission')} value={commission} onChangeText={setCommission}
           keyboardType="number-pad" placeholder="0" error={errors.commission} />
       ) : null}
       <View style={styles.totalBox}>
@@ -176,7 +176,7 @@ export function ListingForm({
       </View>
 
       {/* ---------- Location ---------- */}
-      <SectionTitle>📍 {t('post.location')}</SectionTitle>
+      <SectionTitle>{t('post.location')}</SectionTitle>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: space.sm }}>
         {areaPlaces.map((p) => (
           <Chip key={p.slug} label={i18n.language === 'ne' ? p.name_ne : p.name} selected={area === p.name}
@@ -206,12 +206,12 @@ export function ListingForm({
         </MapView>
       </View>
       {errors.pin ? <Text style={styles.error}>{errors.pin}</Text> : null}
-      <Text style={styles.privacy}>🔒 {t('post.privacy')}</Text>
-      <Button title={`🎯 ${t('post.useMyLocation')}`} variant="outline" onPress={useMyPosition}
+      <Text style={styles.privacy}>{t('post.privacy')}</Text>
+      <Button title={t('post.useMyLocation')} icon="navigate" variant="secondary" size="md" onPress={useMyPosition}
         style={{ marginTop: space.sm }} />
 
       {/* ---------- Facilities ---------- */}
-      <SectionTitle>✅ {t('listing.amenities')}</SectionTitle>
+      <SectionTitle>{t('listing.amenities')}</SectionTitle>
       <View style={styles.wrap}>
         {(meta.data?.amenities ?? []).map((a) => (
           <Chip key={a} label={t(`amenities.${a}`, { defaultValue: a })} selected={amenities.includes(a)}
@@ -247,7 +247,7 @@ export function ListingForm({
         style={styles.textArea}
       />
 
-      <Button title={submitLabel} onPress={submit} loading={submitting} style={{ marginTop: space.xl }} />
+      <Button title={submitLabel} iconRight="arrow-forward" onPress={submit} loading={submitting} style={{ marginTop: space.xl }} />
     </ScrollView>
   );
 }
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   hint: { color: colors.textMuted, marginBottom: space.sm, fontSize: 13 },
   totalBox: {
     backgroundColor: colors.primarySoft,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: space.md,
     flexDirection: 'row',
     justifyContent: 'space-between',

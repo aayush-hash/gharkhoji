@@ -97,8 +97,10 @@ python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 Open `backend/.env` in VS Code and paste the printed value after `SECRET_KEY=`.
 
 ### Step 10. Start everything
+First create the database and Redis passwords (once — it writes a `.env` next to `docker-compose.yml`):
 ```bash
 cd ~/projects/gharkhoji
+./scripts/generate-secrets.sh
 docker compose up --build
 ```
 The first run downloads images (a few minutes). Keep this terminal open — the API logs appear here.
@@ -110,16 +112,20 @@ Open in your Windows browser:
 - http://localhost:8000/health → `{"status":"ok","database":"ok","redis":"ok"}`
 - http://localhost:8000/docs → interactive API page
 
-### Step 12. Log in with a phone number (in /docs)
-1. `POST /api/v1/auth/otp/request` → **Try it out** → body `{"phone": "9812345678"}` → Execute.
-2. Look at the `docker compose` terminal. You'll see:
-   `📱 SMS to +9779812345678: Your GharKhoji code is 482913 ...`
-3. `POST /api/v1/auth/otp/verify` → `{"phone": "9812345678", "code": "482913"}` → you get `access_token`, `refresh_token`, and `is_new_user: true`.
-4. Click the **Authorize** 🔒 button (top right), paste the `access_token`, Authorize.
-5. `GET /api/v1/users/me` → your profile.
-6. `PATCH /api/v1/users/me` → `{"full_name": "Aayush", "role": "owner", "language": "ne"}` → `onboarding_completed: true`.
+### Step 12. Create an account, then log in (in /docs)
+Sign up once — the SMS code proves the number is yours:
+1. `POST /api/v1/auth/otp/request` → **Try it out** → `{"phone": "9812345678", "purpose": "signup"}` → Execute.
+2. In the logs you'll see: `📱 SMS to +9779812345678: Your GharKhoji code is 482913 ...`
+3. `POST /api/v1/auth/otp/verify` → `{"phone": "9812345678", "purpose": "signup", "code": "482913"}` → copy the `verification_token`.
+4. `POST /api/v1/auth/register` → `{"verification_token": "...", "full_name": "Aayush", "role": "owner", "password": "mysecret42"}` → you're logged in.
 
-Also try breaking it: wrong code 5 times, requesting a code twice within 60 seconds, the phone `12345`, and `"role": "admin"`. Each should be refused.
+Every time after that — no code:
+5. `POST /api/v1/auth/login` → `{"phone": "9812345678", "password": "mysecret42"}` → `access_token`.
+6. Click **Authorize** 🔒, paste the `access_token`, then `GET /api/v1/users/me`.
+
+Forgot password: steps 1–3 with `"purpose": "reset"`, then `POST /api/v1/auth/password/reset`.
+
+Also try breaking it: 5 wrong passwords (the number locks for 15 minutes), a weak password like `12345678`, signing up the same number twice, and `"role": "admin"`. Each should be refused.
 
 ### Step 13. Run the tests
 Open a second Ubuntu terminal:
@@ -165,7 +171,12 @@ Every module has the same four files:
 
 Then register the models in `app/models.py` and the router in `app/main.py`.
 
-### Security decisions built into Day 1
+### Security decisions
+- **Passwords**: hashed with Argon2id (OWASP's first choice) — the real password is never stored or logged. At least 8 characters with letters and numbers; common passwords refused.
+- **Login brute-force protection**: 5 wrong passwords lock that number for 15 minutes; 50 failures per network per hour are blocked. Unknown numbers and wrong passwords take the same time and give the same message, so attackers can't discover who has an account.
+- **SMS codes only for sign-up and forgot password.** A verified code gives a one-time ticket (15 minutes) to finish sign-up or set a new password.
+- **Password change/reset logs out every other device instantly** — old access tokens stop working immediately, not after 15 minutes.
+- **Database**: the API logs in as `gharkhoji_app` (not the superuser), with a random 48-character password; Postgres only listens on this computer; Redis requires a password and isn't reachable from outside Docker.
 - OTP: 6 digits, expires in 5 minutes, single-use, max 5 wrong tries, 60-second resend cooldown, max 5 codes per number per hour and 20 per IP per hour.
 - OTP is stored only as an HMAC hash in Redis.
 - Access token lives 15 minutes; refresh token 30 days.
@@ -219,18 +230,20 @@ git push -u origin main
 ```bash
 docker compose up --build        # start (first time or after changing requirements.txt)
 docker compose up -d             # start in background
-docker compose logs -f api       # follow API logs (OTP codes appear here)
+docker compose logs -f api       # follow API logs (sign-up / reset codes appear here)
 docker compose down              # stop
 docker compose down -v           # stop AND delete database data (fresh start)
 docker compose exec db psql -U postgres -d gharkhoji    # open the database; \dt lists tables
-docker compose exec redis redis-cli keys 'otp:*'        # see OTP keys in Redis
+docker compose exec redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli keys "*"'   # see Redis keys
 ```
 
 ## Common problems on Windows
 | Problem | Fix |
 |---|---|
 | `docker: command not found` in Ubuntu | Docker Desktop → Settings → Resources → WSL Integration → enable Ubuntu |
-| Port 5432 already in use | You have Postgres installed on Windows. Stop it (Services → postgresql → Stop) or change `"5432:5432"` to `"5433:5432"` |
+| Port 5432 already in use | You have Postgres installed on Windows. Stop it (Services → postgresql → Stop) or change `"127.0.0.1:5432:5432"` to `"127.0.0.1:5433:5432"` |
+| `required variable APP_DB_PASSWORD is missing` | Run `./scripts/generate-secrets.sh` once |
+| `password authentication failed for user "gharkhoji_app"` | The database was created before the passwords existed (or `.env` was regenerated). Reset it: `docker compose down -v`, then `docker compose up -d --build` |
 | Live reload doesn't pick up changes | The project is on `C:\`. Move it to `~/projects` inside Ubuntu |
 | `\r: command not found` / weird script errors | Windows line endings. The `.gitattributes` file prevents this; re-clone if it happened |
 | Laptop very slow | Create `C:\Users\YourName\.wslconfig` with `[wsl2]` and `memory=4GB`, then `wsl --shutdown` in PowerShell |

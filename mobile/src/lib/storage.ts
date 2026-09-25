@@ -7,6 +7,8 @@ const KEYS = {
   refreshToken: 'gk.refresh_token',
   language: 'gk.language',
   pushToken: 'gk.push_token',
+  onboarded: 'gk.onboarded',
+  lastPhone: 'gk.last_phone', // pre-fills the login screen
 } as const;
 
 type Key = keyof typeof KEYS;

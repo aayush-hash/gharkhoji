@@ -13,6 +13,7 @@ export interface User {
   role: Role;
   language: Language;
   onboarding_completed: boolean;
+  has_password: boolean;
   created_at: string;
 }
 
@@ -138,6 +139,7 @@ export interface SearchResults {
 }
 
 export interface SearchFilters {
+  q?: string;
   place?: string;
   lat?: number;
   lng?: number;

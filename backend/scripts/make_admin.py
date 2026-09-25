@@ -1,6 +1,6 @@
 """Promote an existing user to admin.
 
-Usage (the user must have logged in once first):
+Usage (the user must have created an account first):
     docker compose exec api python -m scripts.make_admin 98XXXXXXXX
 """
 import asyncio
@@ -17,7 +17,7 @@ async def main(raw_phone: str) -> None:
     async with SessionLocal() as db:
         user = await get_by_phone(db, phone)
         if user is None:
-            sys.exit(f"No user with phone {phone}. Log in with it once first.")
+            sys.exit(f"No user with phone {phone}. Create an account with it first.")
         user.role = UserRole.ADMIN
         await db.commit()
         print(f"✅ {phone} is now an admin")

@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 import jwt
@@ -12,6 +13,7 @@ from app.modules.media import service
 from app.modules.media.schemas import PhotoOrder, UploadRequest, UploadTicket
 
 router = APIRouter(tags=["photos"])
+logger = logging.getLogger("gharkhoji.media")
 
 
 def _http(exc: listing_service.ListingError) -> HTTPException:
@@ -79,15 +81,22 @@ async def local_upload(token: str, request: Request, storage: StorageDep) -> Non
     except jwt.PyJWTError:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Upload link invalid or expired") from None
 
-    if request.headers.get("content-type", "").split(";")[0].strip() != claims["ct"]:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Content-Type must be {claims['ct']}")
+    # Note: we don't trust the Content-Type header — the real check is on the file bytes below.
+    sent_type = request.headers.get("content-type", "").split(";")[0].strip()
 
     data = bytearray()
     async for chunk in request.stream():
         data.extend(chunk)
         if len(data) > claims["max"]:
             raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Photo is too large (max 10 MB)")
-    if sniff_image_type(bytes(data[:16])) != claims["ct"]:
+    detected = sniff_image_type(bytes(data[:16]))
+    if detected != claims["ct"]:
+        logger.warning(
+            "Upload rejected: expected %s, detected %s, header %r, %d bytes, starts with %r",
+            claims["ct"], detected, sent_type, len(data), bytes(data[:8]),
+        )
+        if not data:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "The upload was empty. Please try again.")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "File is not a valid image of the declared type")
     storage.write(claims["key"], bytes(data))
 

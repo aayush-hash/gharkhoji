@@ -157,7 +157,7 @@ async def test_photo_upload_flow_and_file_served(client, make_user):
     assert updated["photo_slots_left"] == 7
 
     url = updated["photos"][0]["url"]
-    path = urlsplit(url).path
+    path = urlsplit(url).path  # works whatever PUBLIC_BASE_URL is
     r = await client.get(path)
     assert r.status_code == 200
     assert r.content == PNG
@@ -373,3 +373,45 @@ async def test_meta_endpoint(client):
     r = await client.get(f"{API}/listings/meta")
     assert "1bhk" in r.json()["listing_types"]
     assert r.json()["max_photos"] == 8
+
+
+async def test_upload_judged_by_bytes_not_header(client, make_user):
+    """Some phone uploaders change/drop Content-Type; the real check is the file content."""
+    owner = await make_user("owner")
+    listing = await create_listing(client, owner["headers"])
+    r = await client.post(
+        f"{API}/listings/{listing['id']}/photos/upload-url",
+        headers=owner["headers"],
+        json={"content_type": "image/png", "size_bytes": len(PNG)},
+    )
+    ticket = r.json()
+    r = await client.put(ticket["upload_url"], content=PNG, headers={"Content-Type": "application/octet-stream"})
+    assert r.status_code == 204
+
+
+async def test_empty_upload_has_clear_message(client, make_user):
+    owner = await make_user("owner")
+    listing = await create_listing(client, owner["headers"])
+    r = await client.post(
+        f"{API}/listings/{listing['id']}/photos/upload-url",
+        headers=owner["headers"],
+        json={"content_type": "image/jpeg", "size_bytes": 100},
+    )
+    r = await client.put(r.json()["upload_url"], content=b"", headers={"Content-Type": "image/jpeg"})
+    assert r.status_code == 400
+    assert "empty" in r.json()["detail"]
+
+
+async def test_failed_upload_can_be_discarded_to_free_slot(client, make_user):
+    owner = await make_user("owner")
+    listing = await create_listing(client, owner["headers"])
+    r = await client.post(
+        f"{API}/listings/{listing['id']}/photos/upload-url",
+        headers=owner["headers"],
+        json={"content_type": "image/jpeg", "size_bytes": 100},
+    )
+    photo_id = r.json()["photo_id"]
+    r = await client.delete(f"{API}/listings/{listing['id']}/photos/{photo_id}", headers=owner["headers"])
+    assert r.status_code == 204
+    detail = (await client.get(f"{API}/listings/{listing['id']}", headers=owner["headers"])).json()
+    assert detail["photo_slots_left"] == 8

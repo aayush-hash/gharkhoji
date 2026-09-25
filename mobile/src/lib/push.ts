@@ -62,9 +62,15 @@ export async function unregisterPush(): Promise<void> {
 /** Tapping a notification opens the right screen. */
 export function listenForNotificationTaps(): () => void {
   const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    const data = response.notification.request.content.data as { type?: string; listing_id?: string };
+    const data = response.notification.request.content.data as {
+      type?: string;
+      listing_id?: string;
+      conversation_id?: string;
+    };
     if (data?.type === 'confirm_availability' || data?.type === 'listing_expired') {
       router.push('/(tabs)/mine');
+    } else if (data?.type === 'chat' && data.conversation_id) {
+      router.push(`/chat/${data.conversation_id}`);
     }
   });
   return () => sub.remove();

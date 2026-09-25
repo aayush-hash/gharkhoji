@@ -14,6 +14,7 @@ type AuthState = {
   user: User | null;
   hydrate: () => Promise<void>;
   signIn: (res: LoginResponse) => Promise<void>;
+  setTokens: (tokens: TokenPair) => Promise<void>;
   setUser: (user: User) => void;
   signOut: () => Promise<void>;
 };
@@ -35,7 +36,13 @@ export const useAuth = create<AuthState>((set, get) => ({
     if (refreshToken) {
       try {
         const user = await api<User>('/users/me');
-        set({ user });
+        if (!user.has_password || !user.onboarding_completed) {
+          // Signed in with the old code-only login: they must set a password first
+          // ("Forgot password" on the login screen sends a code to do that).
+          await get().signOut();
+        } else {
+          set({ user });
+        }
       } catch {
         // Offline or session expired — the api() helper already cleared an expired session.
       }
@@ -45,7 +52,14 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   signIn: async (res) => {
     await saveTokens(res);
+    await storage.set('lastPhone', res.user.phone.replace(/^\+977/, ''));
     set({ accessToken: res.access_token, refreshToken: res.refresh_token, user: res.user });
+  },
+
+  // After a password change the server gives this phone fresh tokens (others are logged out).
+  setTokens: async (tokens) => {
+    await saveTokens(tokens);
+    set({ accessToken: tokens.access_token, refreshToken: tokens.refresh_token });
   },
 
   setUser: (user) => set({ user }),

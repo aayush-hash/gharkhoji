@@ -11,6 +11,8 @@ from app.core.config import settings
 from app.core.database import engine
 from app.core.redis import redis_client
 from app.modules.auth.router import router as auth_router
+from app.modules.chat.router import router as chat_router
+from app.modules.favorites.router import router as favorites_router
 from app.modules.listings.router import router as listings_router
 from app.modules.media.router import mount_local_files
 from app.modules.media.router import router as media_router
@@ -30,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version="0.4.0",
+    version="0.6.0",
     lifespan=lifespan,
     # Hide interactive docs in production
     docs_url=None if settings.is_production else "/docs",
@@ -51,6 +53,8 @@ app.include_router(listings_router, prefix=settings.API_V1_PREFIX)
 app.include_router(media_router, prefix=settings.API_V1_PREFIX)
 app.include_router(search_router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications_router, prefix=settings.API_V1_PREFIX)
+app.include_router(favorites_router, prefix=settings.API_V1_PREFIX)
+app.include_router(chat_router, prefix=settings.API_V1_PREFIX)
 mount_local_files(app)
 
 

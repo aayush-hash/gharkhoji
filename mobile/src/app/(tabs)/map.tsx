@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { useMapSearch } from '../../api/hooks';
+import { Icon } from '../../components/ui';
 import { formatRs } from '../../lib/format';
 import { clampToValley, getMyLocation, insideValley, KATHMANDU } from '../../lib/location';
 import { colors, radius, space } from '../../lib/theme';
@@ -73,14 +74,14 @@ export default function MapScreen() {
           <Text style={styles.countText}>{t('map.count', { count: query.data?.total ?? 0 })}</Text>
         </View>
         <Pressable style={styles.meBtn} onPress={goToMe}>
-          <Text style={{ fontSize: 20 }}>🎯</Text>
+          <Icon name="locate" size={22} color={colors.primary} />
         </Pressable>
       </SafeAreaView>
 
       {selected ? (
         <Pressable style={styles.card} onPress={() => router.push(`/listing/${selected.id}`)}>
           <Text style={styles.cardTitle} numberOfLines={1}>{selected.title}</Text>
-          <Text style={styles.cardArea} numberOfLines={1}>📍 {selected.area} · {t(`types.${selected.listing_type}`)}</Text>
+          <Text style={styles.cardArea} numberOfLines={1}>{selected.area} · {t(`types.${selected.listing_type}`)}</Text>
           <Text style={styles.cardPrice}>
             {formatRs(selected.total_monthly_cost)}
             <Text style={styles.cardPer}>{t('listing.perMonth')}</Text>

@@ -5,18 +5,37 @@
     "loading": "Loading…",
     "networkError": "Can't reach the server. Check your internet and that the backend is running.",
     "somethingWrong": "Something went wrong",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "startAgain": "Start again"
   },
   "welcome": {
     "title": "GharKhoji",
     "tagline": "Find a real room that is actually available today.",
-    "chooseLanguage": "Choose your language"
+    "chooseLanguage": "Choose your language",
+    "verifiedTitle": "Real rooms, real owners",
+    "verifiedText": "Every owner verifies their phone. Agents are clearly marked with their commission — no surprises.",
+    "availableTitle": "Actually available today",
+    "availableText": "Owners confirm every 2–3 days. If they don't, the room disappears from search. No more calling for rooms already rented.",
+    "transparentTitle": "Know the full cost",
+    "transparentText": "Rent, water, waste, internet, parking and deposit — all shown upfront before you call anyone.",
+    "chipPhone": "Phone verified",
+    "chipOwner": "Owner, not broker",
+    "chipFresh": "Confirmed 2h ago",
+    "chipHidden": "Old ads hidden",
+    "chipTotal": "Rs 16,500 total/month",
+    "chipNoFee": "No broker fee",
+    "getStarted": "Get started",
+    "browse": "I'll just browse",
+    "haveAccount": "Log in"
   },
   "tabs": {
     "home": "Home",
     "profile": "Profile",
     "map": "Map",
-    "mine": "My listings"
+    "mine": "My listings",
+    "explore": "Explore",
+    "saved": "Saved",
+    "chats": "Chats"
   },
   "home": {
     "title": "Find your room",
@@ -28,7 +47,21 @@
     "anyType": "Any",
     "search": "Search rooms",
     "freshest": "Recently confirmed available",
-    "seeAll": "See all"
+    "seeAll": "See all",
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "valley": "Kathmandu Valley",
+    "heroTitle": "Find a room that's\nactually available",
+    "searchTitle": "Where do you want to live?",
+    "searchHint": "Area, landmark or budget",
+    "trustVerified": "Verified owners",
+    "trustFresh": "Confirmed daily",
+    "trustCost": "Full cost shown",
+    "areas": "Popular areas",
+    "budgetPicks": "Budget picks",
+    "ctaTitle": "Have a room to rent?",
+    "ctaText": "List it free in 3 minutes and reach genuine tenants."
   },
   "search": {
     "title": "Rooms",
@@ -40,7 +73,17 @@
       "price_low": "Cheapest",
       "price_high": "Most expensive",
       "distance": "Nearest"
-    }
+    },
+    "placeholder": "Search title, area or landmark",
+    "anywhere": "Anywhere",
+    "filters": "Filters",
+    "reset": "Reset",
+    "apply": "Show results",
+    "sortBy": "Sort by",
+    "distance": "Distance",
+    "min": "Min rent",
+    "max": "Max rent",
+    "emptyTitle": "No rooms found"
   },
   "listing": {
     "perMonth": "/month",
@@ -63,7 +106,10 @@
     "listedBy": "Listed by",
     "phoneVerified": "Phone verified",
     "contactSoon": "Contacting owners is coming soon",
-    "loginToContact": "Log in to contact"
+    "loginToContact": "Log in to contact",
+    "noHiddenFees": "No hidden fees — this is the full monthly cost",
+    "perMonthAll": "per month, all included",
+    "chatSoon": "Chat coming soon"
   },
   "fresh": {
     "confirmed": "Confirmed available {{ago}}",
@@ -121,10 +167,23 @@
     "verify": "Verify",
     "resendIn": "Resend code in {{seconds}}s",
     "resend": "Resend code",
-    "invalidPhone": "Enter a 10-digit number starting with 97 or 98"
+    "invalidPhone": "Enter a 10-digit number starting with 97 or 98",
+    "step": "Step {{n}} of {{total}}",
+    "phoneTitle": "What's your mobile number?",
+    "privacy": "Your number is never shown publicly. We only use it to verify you're a real person.",
+    "guest": "Continue as guest",
+    "sentTo": "Sent to",
+    "change": "Change",
+    "signupHint": "We'll text a 6-digit code to confirm it's your number. You only need a code this once — after that, you log in with your password.",
+    "alreadyRegistered": "This number already has a GharKhoji account.",
+    "loginInstead": "Log in instead",
+    "numberVerified": "Number verified",
+    "createAccount": "Create account",
+    "expiredTitle": "Please verify again",
+    "expiredText": "For your security, this step expired. Verify your number again to continue."
   },
   "onboarding": {
-    "title": "Tell us about you",
+    "title": "Create your account",
     "name": "Your name",
     "namePlaceholder": "e.g. Sita Sharma",
     "iAm": "I am a…",
@@ -132,7 +191,9 @@
     "ownerDesc": "I own a property to rent out",
     "agentDesc": "I help owners find tenants (commission shown publicly)",
     "roleNote": "You can't switch between owner and agent later without verification.",
-    "finish": "Finish"
+    "finish": "Finish",
+    "subtitle": "Owners and tenants see your name, so they know who they're talking to.",
+    "nameRequired": "Enter your full name"
   },
   "profile": {
     "title": "Profile",
@@ -141,7 +202,15 @@
     "login": "Log in",
     "language": "Language",
     "logout": "Log out",
-    "role": "Account type"
+    "role": "Account type",
+    "signUp": "Create an account",
+    "haveAccount": "I already have an account",
+    "logoutTitle": "Log out of GharKhoji?",
+    "safety": "Safety tips",
+    "safetyText": "• Never pay a deposit before visiting the room.\n• Visit with a friend in daylight.\n• Check that the owner's name matches their documents.\n• Report any listing that asks for money in advance.",
+    "how": "How GharKhoji works",
+    "howText": "Owners confirm their room is still available every 2–3 days. If they don't, it's hidden automatically. Every listing shows the full monthly cost, and agents must show their commission.",
+    "contact": "Contact support"
   },
   "map": {
     "count_one": "{{count}} room here",
@@ -220,5 +289,160 @@
     "permission": "Please allow photo/camera access in Settings.",
     "deleteTitle": "Delete this photo?",
     "delete": "Delete"
+  },
+  "role": {
+    "title": "How will you use GharKhoji?",
+    "subtitle": "Pick one to get the right experience. You can browse either way.",
+    "tenantTitle": "I'm looking for a room",
+    "tenantText": "Find verified rooms and flats that are actually available",
+    "ownerTitle": "I have a room to rent",
+    "ownerText": "List for free and reach genuine tenants near you",
+    "agentTitle": "I'm an agent",
+    "agentText": "Help owners find tenants — your commission is shown publicly",
+    "agentPrompt": "Helping owners professionally?"
+  },
+  "saved": {
+    "title": "Saved rooms",
+    "count_one": "{{count}} room",
+    "count_other": "{{count}} rooms",
+    "guestTitle": "Save rooms you like",
+    "guestText": "Log in to keep a shortlist and compare rooms later.",
+    "emptyTitle": "No saved rooms yet",
+    "emptyText": "Tap the ♥ on any room to save it here.",
+    "explore": "Explore rooms",
+    "noLongerAvailable": "No longer available"
+  },
+  "login": {
+    "title": "Welcome back",
+    "subtitle": "Log in with your mobile number and password.",
+    "forgot": "Forgot password?",
+    "button": "Log in",
+    "wrong": "Incorrect phone number or password.",
+    "attemptsLeft_one": "{{count}} attempt left before your number is locked for 15 minutes.",
+    "attemptsLeft_other": "{{count}} attempts left before your number is locked for 15 minutes.",
+    "noPassword": "This account was created before passwords. Verify your number once to set one.",
+    "setPasswordNow": "Set a password with an SMS code",
+    "secure": "Your password is encrypted. GharKhoji staff can never see it.",
+    "newHere": "New to GharKhoji?",
+    "createAccount": "Create an account"
+  },
+  "reset": {
+    "title": "Forgot your password?",
+    "subtitle": "Enter your number. We'll text you a code so you can choose a new password.",
+    "noAccount": "No account uses this number yet.",
+    "newTitle": "Choose a new password",
+    "newSubtitle": "You'll be logged out on every other phone, for your safety.",
+    "save": "Save and log in"
+  },
+  "password": {
+    "label": "Password",
+    "new": "New password",
+    "current": "Current password",
+    "confirm": "Confirm password",
+    "required": "Enter your password",
+    "tooWeak": "Password doesn't meet the rules below",
+    "mismatch": "Passwords don't match",
+    "sameAsOld": "Choose a different password from your current one",
+    "currentWrong": "Current password is incorrect",
+    "createTitle": "Create a password",
+    "createHint": "You'll use it with your number to log in next time — no code needed.",
+    "ruleLength": "At least 8 characters",
+    "ruleMix": "Letters and numbers",
+    "ruleCommon": "Not an easy-to-guess password"
+  },
+  "changePassword": {
+    "title": "Change password",
+    "subtitle": "For your safety, every other phone logged in to your account will be logged out.",
+    "save": "Update password",
+    "doneTitle": "Password updated",
+    "doneText": "You're still logged in here. Other phones were logged out."
+  },
+  "chat": {
+    "title": "Chats",
+    "subtitle": "Talk to owners and tenants — your number stays private",
+    "all": "All",
+    "unread": "Unread",
+    "allRead": "You're all caught up",
+    "loginTitle": "Chat with owners",
+    "loginText": "Log in to message owners and agents about rooms. Your phone number is never shared.",
+    "emptyTenantTitle": "No chats yet",
+    "emptyTenantText": "Find a room you like and tap “Chat with owner” to ask anything.",
+    "emptyOwnerTitle": "No messages yet",
+    "emptyOwnerText": "When tenants ask about your rooms, their messages appear here.",
+    "findRooms": "Find rooms",
+    "you": "You",
+    "someone": "GharKhoji user",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "weekdays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
+    "months": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
+    "activeNow": "Active now",
+    "typing": "typing…",
+    "seen": "Seen",
+    "notSent": "Not sent · Tap to retry",
+    "placeholder": "Write a message…",
+    "safety": "Stay safe: never pay a deposit or “advance” before you visit the room in person. Keep your chats inside GharKhoji.",
+    "paymentWarning": "This message mentions paying money. Never pay before you've seen the room and met the owner.",
+    "noLongerAvailable": "No longer available",
+    "roomDeleted": "This room was removed",
+    "viewRoom": "View room",
+    "block": "Block",
+    "unblock": "Unblock",
+    "report": "Report",
+    "blockTitle": "Block {{name}}?",
+    "blockText": "Neither of you will be able to send messages in this chat. You can unblock any time.",
+    "blockedByMe": "You blocked this person.",
+    "blockedByOther": "You can't reply to this conversation.",
+    "reportTitle": "Why are you reporting?",
+    "reasons": {
+      "scam": "Asking for money / scam",
+      "harassment": "Rude or harassing",
+      "fake_listing": "Fake or wrong listing",
+      "spam": "Spam",
+      "other": "Something else"
+    },
+    "reportedTitle": "Thanks for reporting",
+    "reportedText": "Our team will review this chat. We've blocked this person for you.",
+    "chatWithOwner": "Chat with owner",
+    "chatWithAgent": "Chat with agent",
+    "startTitle": "Message {{name}}",
+    "startHello": "Say namaste to {{name}} 👋",
+    "startHint": "Ask about availability, a visit time, or anything in the listing. They'll get a notification.",
+    "suggestions": "Quick questions",
+    "firstMessage": "Namaste! Is this room still available?",
+    "quickTenant": [
+      "Is this room still available?",
+      "Can I visit this week?",
+      "Is the price negotiable?",
+      "Is water available 24 hours?",
+      "Is it okay for students?"
+    ],
+    "quickOwner": [
+      "Yes, it's still available ✅",
+      "When would you like to visit?",
+      "Sorry, it's already rented.",
+      "Please call me to arrange a visit."
+    ]
   }
 }

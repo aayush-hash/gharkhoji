@@ -46,6 +46,15 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     phone_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Argon2id hash — the real password is never stored. NULL = account made before
+    # passwords existed; the owner sets one via "Forgot password" (SMS code).
+    password_hash: Mapped[str | None] = mapped_column(String(255))
+    # Access tokens issued before this moment stop working (e.g. after a password reset).
+    password_changed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @property
+    def has_password(self) -> bool:
+        return self.password_hash is not None
 
     def __repr__(self) -> str:
         return f"<User {self.phone} ({self.role.value})>"

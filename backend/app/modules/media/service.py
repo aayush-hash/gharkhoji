@@ -11,8 +11,9 @@ from app.modules.listings.service import ListingError
 from app.modules.media.models import ListingPhoto, PhotoStatus
 from app.modules.media.schemas import UploadRequest, UploadTicket
 
-# A pending upload that was never finished stops counting against the limit after this long.
-PENDING_TTL = timedelta(hours=1)
+# A pending upload that was never finished stops counting against the limit after this long
+# (upload links expire after 10 minutes, so 15 is safe).
+PENDING_TTL = timedelta(minutes=15)
 
 
 def _slots_used(listing: Listing) -> int:

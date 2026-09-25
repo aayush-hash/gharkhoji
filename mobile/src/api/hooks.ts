@@ -3,6 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClie
 
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import type { AuthMode } from '../lib/authFlow';
 import type {
   Listing,
   ListingCard,
@@ -10,8 +11,10 @@ import type {
   ListingMeta,
   LoginResponse,
   Place,
+  Role,
   SearchFilters,
   SearchResults,
+  TokenPair,
   User,
 } from '../lib/types';
 
@@ -38,6 +41,7 @@ function searchQuery(filters: SearchFilters, page: number, pageSize: number) {
   return api<SearchResults>('/search/listings', {
     auth: false,
     query: {
+      q: filters.q,
       place: filters.place,
       lat: filters.lat,
       lng: filters.lng,
@@ -81,23 +85,66 @@ export function useListing(id: string) {
 
 // ---------------- auth ----------------
 
+// ---------------- accounts ----------------
+// Sign up:          useRequestOtp('signup') → useVerifyOtp → useRegister
+// Log in:           useLogin (phone + password, no SMS)
+// Forgot password:  useRequestOtp('reset')  → useVerifyOtp → useResetPassword
+
 export function useRequestOtp() {
   return useMutation({
-    mutationFn: (phone: string) =>
+    mutationFn: (v: { phone: string; purpose: AuthMode }) =>
       api<{ message: string; expires_in: number; resend_after: number }>('/auth/otp/request', {
         method: 'POST',
-        body: { phone },
+        body: v,
         auth: false,
       }),
   });
 }
 
 export function useVerifyOtp() {
+  return useMutation({
+    mutationFn: (v: { phone: string; code: string; purpose: AuthMode }) =>
+      api<{ verification_token: string; purpose: AuthMode; expires_in: number }>('/auth/otp/verify', {
+        method: 'POST',
+        body: v,
+        auth: false,
+      }),
+  });
+}
+
+export function useRegister() {
   const signIn = useAuth((s) => s.signIn);
   return useMutation({
-    mutationFn: (v: { phone: string; code: string }) =>
-      api<LoginResponse>('/auth/otp/verify', { method: 'POST', body: v, auth: false }),
+    mutationFn: (body: { verification_token: string; full_name: string; role: Role; password: string }) =>
+      api<LoginResponse>('/auth/register', { method: 'POST', body, auth: false }),
     onSuccess: signIn,
+  });
+}
+
+export function useLogin() {
+  const signIn = useAuth((s) => s.signIn);
+  return useMutation({
+    mutationFn: (body: { phone: string; password: string }) =>
+      api<LoginResponse>('/auth/login', { method: 'POST', body, auth: false }),
+    onSuccess: signIn,
+  });
+}
+
+export function useResetPassword() {
+  const signIn = useAuth((s) => s.signIn);
+  return useMutation({
+    mutationFn: (body: { verification_token: string; password: string }) =>
+      api<LoginResponse>('/auth/password/reset', { method: 'POST', body, auth: false }),
+    onSuccess: signIn,
+  });
+}
+
+export function useChangePassword() {
+  const setTokens = useAuth((s) => s.setTokens);
+  return useMutation({
+    mutationFn: (body: { current_password: string; password: string }) =>
+      api<TokenPair>('/auth/password/change', { method: 'POST', body }),
+    onSuccess: setTokens,
   });
 }
 

@@ -1,222 +1,390 @@
+// Listing detail — photos first, then the three trust questions:
+// Is it real? Is it still vacant? What will I actually pay?
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import MapView, { Circle } from 'react-native-maps';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { useListing } from '../../../api/hooks';
 import { FreshnessBadge, RoleBadge } from '../../../components/badges';
-import { Badge, Button, ErrorView, Loading, SectionTitle } from '../../../components/ui';
+import { SaveButton } from '../../../components/ListingCard';
+import { Avatar, Badge, Button, ErrorView, IconButton, Skeleton } from '../../../components/ui';
 import { useAuth } from '../../../lib/auth';
 import { formatRs } from '../../../lib/format';
-import { colors, radius, space } from '../../../lib/theme';
+import { colors, font, radius, shadow, space } from '../../../lib/theme';
+
+const AMENITY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  water_24h: 'water',
+  drinking_water: 'water-outline',
+  attached_bathroom: 'body',
+  kitchen: 'restaurant',
+  balcony: 'leaf',
+  sunlight: 'sunny',
+  bike_parking: 'bicycle',
+  car_parking: 'car',
+  internet: 'wifi',
+  separate_meter: 'speedometer',
+  hot_water: 'flame',
+  pets_allowed: 'paw',
+  road_access: 'trail-sign',
+  near_public_transport: 'bus',
+};
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const user = useAuth((s) => s.user);
   const query = useListing(id);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const heroHeight = Math.min(width * 0.85, 420);
 
-  if (query.isLoading) return <Loading />;
-  if (query.isError || !query.data) return <ErrorView error={query.error} onRetry={() => query.refetch()} />;
+  if (query.isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <Skeleton width="100%" height={heroHeight} radius={0} />
+        <View style={{ padding: space.lg, gap: space.md }}>
+          <Skeleton width="60%" height={26} />
+          <Skeleton width="40%" height={16} />
+          <Skeleton width="100%" height={140} radius={radius.xl} />
+        </View>
+      </View>
+    );
+  }
+  if (query.isError || !query.data) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+        <IconButton name="chevron-back" onPress={() => router.back()} style={{ margin: space.lg }} />
+        <ErrorView error={query.error} onRetry={() => query.refetch()} />
+      </SafeAreaView>
+    );
+  }
   const l = query.data;
+  const isMine = Boolean(l.exact_location);
 
-  const costRows: [string, number][] = [
-    [t('listing.rent'), l.cost.rent],
-    [t('listing.water'), l.cost.water],
-    [t('listing.waste'), l.cost.waste],
-    [t('listing.internet'), l.cost.internet],
-    [t('listing.parking'), l.cost.parking],
+  const costRows: [string, number, keyof typeof Ionicons.glyphMap][] = [
+    [t('listing.rent'), l.cost.rent, 'home'],
+    [t('listing.water'), l.cost.water, 'water'],
+    [t('listing.waste'), l.cost.waste, 'trash'],
+    [t('listing.internet'), l.cost.internet, 'wifi'],
+    [t('listing.parking'), l.cost.parking, 'car'],
   ];
 
+  const share = () =>
+    Share.share({
+      message: `${l.title} — ${formatRs(l.cost.total_monthly)}${t('listing.perMonth')} · ${l.area}\nGharKhoji`,
+    });
+
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Photo carousel */}
-        {l.photos.length > 0 ? (
-          <View>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 130 }} showsVerticalScrollIndicator={false}>
+        {/* ---------- Photos ---------- */}
+        <View style={{ height: heroHeight }}>
+          {l.photos.length > 0 ? (
             <ScrollView
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
               onMomentumScrollEnd={(e) => setPhotoIndex(Math.round(e.nativeEvent.contentOffset.x / width))}>
               {l.photos.map((p) => (
-                <Image key={p.id} source={p.url} style={{ width, height: 260 }} contentFit="cover" transition={150} />
+                <Image key={p.id} source={p.url} style={{ width, height: heroHeight }} contentFit="cover" transition={200} />
               ))}
             </ScrollView>
-            <View style={styles.counter}>
-              <Text style={styles.counterText}>
-                {photoIndex + 1} / {l.photos.length}
-              </Text>
+          ) : (
+            <View style={[styles.noPhoto, { height: heroHeight }]}>
+              <Ionicons name="home" size={64} color={colors.primaryTint} />
+            </View>
+          )}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.45)', 'transparent']}
+            style={[styles.topFade, { height: insets.top + 80 }]}
+            pointerEvents="none"
+          />
+          <View style={[styles.topBar, { top: insets.top + space.sm }]}>
+            <IconButton name="chevron-back" onPress={() => router.back()} accessibilityLabel="Back" />
+            <View style={{ flexDirection: 'row', gap: space.sm }}>
+              <IconButton name="share-outline" onPress={share} accessibilityLabel="Share" />
+              {!isMine ? <SaveButton id={l.id} size={40} /> : null}
             </View>
           </View>
-        ) : (
-          <View style={[styles.noPhoto, { width }]}>
-            <Text style={{ fontSize: 56 }}>🏠</Text>
-          </View>
-        )}
+          {l.photos.length > 1 ? (
+            <View style={styles.dots}>
+              {l.photos.map((p, i) => (
+                <View key={p.id} style={[styles.dot, i === photoIndex && styles.dotActive]} />
+              ))}
+            </View>
+          ) : null}
+        </View>
 
-        <View style={styles.body}>
+        {/* ---------- Title block ---------- */}
+        <View style={styles.sheet}>
           <View style={styles.badges}>
-            <Badge label={t(`types.${l.listing_type}`)} color={colors.primaryDark} bg={colors.primarySoft} />
+            <Badge label={t(`types.${l.listing_type}`)} color={colors.primaryDark} bg={colors.primarySoft} icon="home" />
             <RoleBadge role={l.listed_by.role} />
+            {isMine ? <Badge label={t(`status.${l.status}`)} color={colors.stale} bg={colors.staleBg} /> : null}
           </View>
           <Text style={styles.title}>{l.title}</Text>
-          <Text style={styles.area}>
-            📍 {l.area}
-            {l.landmark ? ` · ${l.landmark}` : ''}
-          </Text>
-          <View style={{ marginTop: space.sm }}>
-            <FreshnessBadge confirmedAt={l.last_confirmed_at} />
+          <View style={styles.locRow}>
+            <Ionicons name="location" size={16} color={colors.primary} />
+            <Text style={styles.loc}>
+              {l.area}
+              {l.landmark ? ` · ${l.landmark}` : ''}
+            </Text>
           </View>
 
-          {/* The key promise: what will I actually pay? */}
-          <View style={styles.costCard}>
-            <Text style={styles.costLabel}>{t('listing.totalMonthly')}</Text>
-            <Text style={styles.costTotal}>
+          {/* ---------- Trust row ---------- */}
+          <View style={[styles.trust, shadow(1)]}>
+            <FreshnessBadge confirmedAt={l.last_confirmed_at} />
+            {l.listed_by.phone_verified ? (
+              <Badge label={t('listing.phoneVerified')} color={colors.fresh} bg={colors.freshBg} icon="call" />
+            ) : null}
+          </View>
+
+          {/* ---------- What will I pay ---------- */}
+          <View style={[styles.card, shadow(1)]}>
+            <Text style={styles.cardLabel}>{t('listing.totalMonthly')}</Text>
+            <Text style={styles.total}>
               {formatRs(l.cost.total_monthly)}
               <Text style={styles.perMonth}>{t('listing.perMonth')}</Text>
             </Text>
             {costRows
               .filter(([, amount]) => amount > 0)
-              .map(([label, amount]) => (
+              .map(([label, amount, icon]) => (
                 <View key={label} style={styles.costRow}>
-                  <Text style={styles.costRowLabel}>{label}</Text>
-                  <Text style={styles.costRowValue}>{formatRs(amount)}</Text>
+                  <Ionicons name={icon} size={16} color={colors.textMuted} />
+                  <Text style={styles.costLabel}>{label}</Text>
+                  <Text style={styles.costValue}>{formatRs(amount)}</Text>
                 </View>
               ))}
-            <View style={[styles.costRow, styles.costDivider]}>
-              <Text style={styles.costRowLabel}>{t('listing.deposit')}</Text>
-              <Text style={styles.costRowValue}>{formatRs(l.deposit)}</Text>
+            <View style={[styles.costRow, styles.divider]}>
+              <Ionicons name="wallet" size={16} color={colors.textMuted} />
+              <Text style={styles.costLabel}>{t('listing.deposit')}</Text>
+              <Text style={styles.costValue}>{formatRs(l.deposit)}</Text>
             </View>
             {l.agent_commission != null ? (
               <View style={styles.costRow}>
-                <Text style={[styles.costRowLabel, { color: colors.agent }]}>{t('listing.commission')}</Text>
-                <Text style={[styles.costRowValue, { color: colors.agent }]}>{formatRs(l.agent_commission)}</Text>
+                <Ionicons name="briefcase" size={16} color={colors.agent} />
+                <Text style={[styles.costLabel, { color: colors.agent }]}>{t('listing.commission')}</Text>
+                <Text style={[styles.costValue, { color: colors.agent }]}>{formatRs(l.agent_commission)}</Text>
               </View>
             ) : null}
+            <View style={styles.noFee}>
+              <Ionicons name="shield-checkmark" size={15} color={colors.fresh} />
+              <Text style={styles.noFeeText}>{t('listing.noHiddenFees')}</Text>
+            </View>
           </View>
 
+          {/* ---------- Facilities ---------- */}
           {l.amenities.length > 0 ? (
             <>
-              <SectionTitle>{t('listing.amenities')}</SectionTitle>
+              <Text style={styles.section}>{t('listing.amenities')}</Text>
               <View style={styles.amenities}>
                 {l.amenities.map((a) => (
-                  <View key={a} style={styles.amenity}>
-                    <Text style={styles.amenityText}>✓ {t(`amenities.${a}`, { defaultValue: a })}</Text>
+                  <View key={a} style={[styles.amenity, { width: (Math.min(width, 700) - space.lg * 2 - space.sm) / 2 }]}>
+                    <View style={styles.amenityIcon}>
+                      <Ionicons name={AMENITY_ICONS[a] ?? 'checkmark'} size={17} color={colors.primary} />
+                    </View>
+                    <Text style={styles.amenityText} numberOfLines={1}>
+                      {t(`amenities.${a}`, { defaultValue: a })}
+                    </Text>
                   </View>
                 ))}
               </View>
             </>
           ) : null}
 
-          <SectionTitle>{t('listing.details')}</SectionTitle>
-          <DetailRow label={t('listing.furnishing')} value={t(`furnishing.${l.furnishing}`)} />
-          {l.floor != null ? <DetailRow label={t('listing.floor')} value={String(l.floor)} /> : null}
-          {l.max_occupants != null ? <DetailRow label={t('listing.occupants')} value={String(l.max_occupants)} /> : null}
-          {l.available_from ? <DetailRow label={t('listing.availableFrom')} value={l.available_from} /> : null}
-
+          {/* ---------- Details ---------- */}
+          <Text style={styles.section}>{t('listing.details')}</Text>
+          <View style={[styles.card, shadow(1), { paddingVertical: space.sm }]}>
+            <DetailRow icon="bed" label={t('listing.furnishing')} value={t(`furnishing.${l.furnishing}`)} />
+            {l.floor != null ? <DetailRow icon="layers" label={t('listing.floor')} value={String(l.floor)} /> : null}
+            {l.max_occupants != null ? <DetailRow icon="people" label={t('listing.occupants')} value={String(l.max_occupants)} /> : null}
+            {l.available_from ? <DetailRow icon="calendar" label={t('listing.availableFrom')} value={l.available_from} /> : null}
+          </View>
           {l.description ? <Text style={styles.description}>{l.description}</Text> : null}
 
-          <SectionTitle>{t('listing.location')}</SectionTitle>
-          <Text style={styles.muted}>🔒 {t('listing.approxLocation')}</Text>
+          {/* ---------- Location (approximate) ---------- */}
+          <Text style={styles.section}>{t('listing.location')}</Text>
+          <View style={[styles.mapCard, shadow(1)]}>
+            <MapView
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              initialRegion={{
+                latitude: l.approx_location.lat,
+                longitude: l.approx_location.lng,
+                latitudeDelta: 0.012,
+                longitudeDelta: 0.012,
+              }}>
+              <Circle
+                center={{ latitude: l.approx_location.lat, longitude: l.approx_location.lng }}
+                radius={300}
+                fillColor="rgba(11,122,104,0.18)"
+                strokeColor={colors.primary}
+                strokeWidth={2}
+              />
+            </MapView>
+          </View>
+          <View style={styles.privacy}>
+            <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
+            <Text style={styles.privacyText}>{t('listing.approxLocation')}</Text>
+          </View>
 
-          <SectionTitle>{t('listing.listedBy')}</SectionTitle>
-          <Text style={styles.listedBy}>
-            {l.listed_by.name ?? '—'} · {t(`roles.${l.listed_by.role}`)}
-          </Text>
-          {l.listed_by.phone_verified ? <Text style={styles.verified}>✓ {t('listing.phoneVerified')}</Text> : null}
+          {/* ---------- Listed by ---------- */}
+          <Text style={styles.section}>{t('listing.listedBy')}</Text>
+          <View style={[styles.card, shadow(1), styles.owner]}>
+            <Avatar name={l.listed_by.name} size={52} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ownerName}>{l.listed_by.name ?? '—'}</Text>
+              <Text style={styles.ownerRole}>{t(`roles.${l.listed_by.role}`)}</Text>
+            </View>
+            {l.listed_by.phone_verified ? <Ionicons name="shield-checkmark" size={24} color={colors.fresh} /> : null}
+          </View>
         </View>
       </ScrollView>
 
-      {/* Contact bar — chat & visit booking arrive after the MVP core */}
-      <SafeAreaView edges={['bottom']} style={styles.footer}>
-        {l.exact_location ? (
-          // You own this listing
-          <View style={{ flexDirection: 'row', gap: space.sm }}>
-            <Button title={`✏️ ${t('mine.edit')}`} variant="outline" style={{ flex: 1 }}
-              onPress={() => router.push(`/listing/${l.id}/edit`)} />
-            <Button title={`📷 ${t('photos.screenTitle')}`} variant="outline" style={{ flex: 1 }}
-              onPress={() => router.push(`/listing/${l.id}/photos`)} />
-          </View>
-        ) : user ? (
-          <Button title={t('listing.contactSoon')} onPress={() => {}} disabled variant="outline" />
-        ) : (
-          <Button title={t('listing.loginToContact')} onPress={() => router.push('/login')} />
-        )}
-      </SafeAreaView>
+      {/* ---------- Sticky bottom bar ---------- */}
+      <View style={[styles.footer, shadow(3), { paddingBottom: Math.max(insets.bottom, space.md) }]}>
+        {/* Price keeps its natural width; the button gets the rest of the row */}
+        <View style={styles.footerPriceBox}>
+          <Text style={styles.footerPrice} numberOfLines={1}>{formatRs(l.cost.total_monthly)}</Text>
+          <Text style={styles.footerSub} numberOfLines={1}>{t('listing.perMonthAll')}</Text>
+        </View>
+        <View style={styles.footerAction}>
+          {isMine ? (
+            <Button title={t('mine.edit')} icon="create" size="md" onPress={() => router.push(`/listing/${l.id}/edit`)} />
+          ) : user ? (
+            <Button
+              title={l.listed_by.role === 'agent' ? t('chat.chatWithAgent') : t('chat.chatWithOwner')}
+              icon="chatbubbles"
+              size="md"
+              onPress={() => router.push(`/chat/start/${l.id}`)}
+            />
+          ) : (
+            <Button title={t('listing.loginToContact')} icon="log-in" size="md" onPress={() => router.push('/auth/login')} />
+          )}
+        </View>
+      </View>
     </View>
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string }) {
   return (
     <View style={styles.detailRow}>
-      <Text style={styles.muted}>{label}</Text>
+      <Ionicons name={icon} size={18} color={colors.primary} />
+      <Text style={styles.detailLabel}>{label}</Text>
       <Text style={styles.detailValue}>{value}</Text>
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
-  counter: {
-    position: 'absolute',
-    bottom: space.sm,
-    right: space.sm,
-    backgroundColor: 'rgba(15,23,42,0.7)',
-    borderRadius: radius.sm,
-    paddingHorizontal: space.sm,
-    paddingVertical: 2,
+  noPhoto: { backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' },
+  topFade: { position: 'absolute', top: 0, left: 0, right: 0 },
+  topBar: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', justifyContent: 'space-between' },
+  dots: { position: 'absolute', bottom: 36, alignSelf: 'center', flexDirection: 'row', gap: 5 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.55)' },
+  dotActive: { width: 18, backgroundColor: '#fff' },
+  sheet: {
+    marginTop: -24,
+    backgroundColor: colors.bg,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    padding: space.lg,
+    paddingTop: space.xl,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
   },
-  counterText: { color: '#fff', fontWeight: '600', fontSize: 12 },
-  noPhoto: { height: 200, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.border },
-  body: { padding: space.lg },
-  badges: { flexDirection: 'row', gap: space.sm },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: space.sm },
-  area: { color: colors.textMuted, marginTop: space.xs, fontSize: 15 },
-  costCard: {
+  badges: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
+  title: { ...font.h1, color: colors.text, marginTop: space.md },
+  locRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.sm },
+  loc: { ...font.body, color: colors.textSecondary, flex: 1 },
+  trust: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
     backgroundColor: colors.card,
     borderRadius: radius.lg,
-    padding: space.lg,
+    padding: space.md,
     marginTop: space.lg,
+  },
+  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: space.lg, marginTop: space.lg },
+  cardLabel: { ...font.smallStrong, color: colors.textMuted },
+  total: { fontSize: 30, fontWeight: '800', color: colors.primaryDark, marginTop: 4, marginBottom: space.md, letterSpacing: -0.5 },
+  perMonth: { fontSize: 15, fontWeight: '500', color: colors.textMuted },
+  costRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 6 },
+  costLabel: { ...font.body, color: colors.textSecondary, flex: 1 },
+  costValue: { ...font.bodyStrong, color: colors.text },
+  divider: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: space.sm, paddingTop: space.md },
+  noFee: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.freshBg,
+    borderRadius: radius.md,
+    padding: space.sm,
+    marginTop: space.md,
+  },
+  noFeeText: { ...font.smallStrong, color: colors.fresh, flex: 1 },
+  section: { ...font.h2, color: colors.text, marginTop: space.xxl },
+  amenities: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.md },
+  amenity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: space.sm,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  costLabel: { color: colors.textMuted, fontWeight: '600' },
-  costTotal: { fontSize: 28, fontWeight: '800', color: colors.primaryDark, marginVertical: space.sm },
-  perMonth: { fontSize: 15, fontWeight: '400', color: colors.textMuted },
-  costRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  costDivider: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: space.sm, paddingTop: space.sm },
-  costRowLabel: { color: colors.text },
-  costRowValue: { color: colors.text, fontWeight: '600' },
-  amenities: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  amenity: { backgroundColor: colors.primarySoft, paddingHorizontal: space.md, paddingVertical: 6, borderRadius: radius.pill },
-  amenityText: { color: colors.primaryDark, fontWeight: '600', fontSize: 13 },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: space.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  amenityIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  detailValue: { color: colors.text, fontWeight: '600' },
-  description: { color: colors.text, marginTop: space.lg, lineHeight: 22 },
-  muted: { color: colors.textMuted },
-  listedBy: { color: colors.text, fontWeight: '600', fontSize: 16 },
-  verified: { color: colors.fresh, marginTop: space.xs, fontWeight: '600' },
+  amenityText: { ...font.smallStrong, color: colors.text, flex: 1 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md },
+  detailLabel: { ...font.body, color: colors.textSecondary, flex: 1 },
+  detailValue: { ...font.bodyStrong, color: colors.text },
+  description: { ...font.body, color: colors.textSecondary, marginTop: space.lg, lineHeight: 23 },
+  mapCard: { height: 180, borderRadius: radius.xl, overflow: 'hidden', marginTop: space.md, backgroundColor: colors.primarySoft },
+  privacy: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.sm },
+  privacyText: { ...font.small, color: colors.textMuted, flex: 1 },
+  owner: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  ownerName: { ...font.h3, color: colors.text },
+  ownerRole: { ...font.small, color: colors.textMuted, marginTop: 2 },
   footer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
     backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
     paddingHorizontal: space.lg,
     paddingTop: space.md,
-    paddingBottom: space.md,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
   },
+  footerPriceBox: { flexShrink: 0, maxWidth: '50%' },
+  footerAction: { flex: 1, minWidth: 0 },
+  footerPrice: { fontSize: 20, fontWeight: '800', color: colors.text },
+  footerSub: { ...font.small, color: colors.textMuted },
 });

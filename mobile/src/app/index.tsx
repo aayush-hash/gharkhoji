@@ -5,10 +5,9 @@ import { usePrefs } from '../lib/prefs';
 
 /** Decides where the app starts. */
 export default function Index() {
-  const language = usePrefs((s) => s.language);
+  const onboarded = usePrefs((s) => s.onboarded);
   const user = useAuth((s) => s.user);
 
-  if (!language) return <Redirect href="/welcome" />;
-  if (user && !user.onboarding_completed) return <Redirect href="/onboarding" />;
+  if (!onboarded && !user) return <Redirect href="/welcome" />;
   return <Redirect href="/(tabs)" />;
 }

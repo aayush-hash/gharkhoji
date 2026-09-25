@@ -1,5 +1,4 @@
 import uuid
-from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,19 +13,6 @@ async def get_by_id(db: AsyncSession, user_id: uuid.UUID) -> User | None:
 
 async def get_by_phone(db: AsyncSession, phone: str) -> User | None:
     return await db.scalar(select(User).where(User.phone == phone))
-
-
-async def get_or_create_by_phone(db: AsyncSession, phone: str) -> tuple[User, bool]:
-    """Returns (user, created). Called after a successful OTP check."""
-    now = datetime.now(UTC)
-    user = await get_by_phone(db, phone)
-    created = user is None
-    if user is None:
-        user = User(phone=phone, phone_verified_at=now)
-        db.add(user)
-    user.last_login_at = now
-    await db.flush()
-    return user, created
 
 
 class RoleChangeNotAllowed(Exception):

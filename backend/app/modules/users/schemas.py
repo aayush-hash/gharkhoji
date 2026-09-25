@@ -18,6 +18,7 @@ class UserOut(BaseModel):
     role: UserRole
     language: Language
     onboarding_completed: bool
+    has_password: bool
     created_at: datetime
 
 

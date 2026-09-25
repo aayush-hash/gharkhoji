@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     OTP_MAX_PER_HOUR: int = 5           # per phone number
     OTP_MAX_PER_HOUR_PER_IP: int = 20
     OTP_MAX_VERIFY_ATTEMPTS: int = 5
+    # After the code is checked, the app gets a short-lived one-time "phone verified" ticket
+    # to finish sign-up or set a new password.
+    VERIFY_TOKEN_TTL_SECONDS: int = 900
+
+    # Password login — brute-force protection
+    LOGIN_MAX_FAILED_ATTEMPTS: int = 5        # wrong passwords before the number is locked
+    LOGIN_LOCK_MINUTES: int = 15
+    LOGIN_MAX_FAILS_PER_IP_PER_HOUR: int = 50
 
     # Base URL the phone uses to reach this API. On Day 3 set it to your laptop's
     # Wi-Fi IP (e.g. http://192.168.1.10:8000) so the phone can load photos.
@@ -67,8 +75,13 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_production_secrets(self) -> "Settings":
-        if self.is_production and "change-me" in self.SECRET_KEY:
-            raise ValueError("Set a real random SECRET_KEY in production")
+        if self.is_production:
+            if "change-me" in self.SECRET_KEY:
+                raise ValueError("Set a real random SECRET_KEY in production")
+            if "postgres:postgres@" in self.DATABASE_URL:
+                raise ValueError("Use a dedicated database user with a strong password in production")
+            if "@" not in self.REDIS_URL:
+                raise ValueError("Redis must require a password in production (redis://:PASSWORD@host:6379/0)")
         return self
 
 
