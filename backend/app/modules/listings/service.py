@@ -144,8 +144,15 @@ async def publish(db: AsyncSession, listing: Listing) -> Listing:
     listing.published_at = listing.published_at or now
     listing.last_confirmed_at = now
     listing.rented_at = None
+    _reset_freshness(listing)
     await db.commit()
     return await reload(db, listing.id)
+
+
+def _reset_freshness(listing: Listing) -> None:
+    listing.expired_at = None
+    listing.reminder_sent_at = None
+    listing.reminders_sent = 0
 
 
 async def confirm_available(db: AsyncSession, listing: Listing) -> Listing:
@@ -154,6 +161,7 @@ async def confirm_available(db: AsyncSession, listing: Listing) -> Listing:
         raise ListingError("Only published listings can be confirmed", 409)
     listing.status = ListingStatus.ACTIVE
     listing.last_confirmed_at = datetime.now(UTC)
+    _reset_freshness(listing)
     await db.commit()
     return await reload(db, listing.id)
 
@@ -230,6 +238,7 @@ def to_out(listing: Listing, storage: Storage, viewer: User | None) -> ListingOu
             **base,
             exact_location=LatLng(lat=listing.lat, lng=listing.lng),
             photo_slots_left=max(0, settings.MAX_PHOTOS_PER_LISTING - len(listing.photos)),
+            needs_confirmation=listing.needs_confirmation,
         )
     return ListingOut(**base)
 
@@ -252,4 +261,6 @@ def to_card(listing: Listing, storage: Storage, distance_m: float | None = None)
         listed_by_role=listing.owner.role,
         last_confirmed_at=listing.last_confirmed_at,
         distance_m=round(distance_m) if distance_m is not None else None,
+        status=listing.status,
+        needs_confirmation=listing.needs_confirmation,
     )

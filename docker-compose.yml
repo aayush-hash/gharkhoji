@@ -24,6 +24,26 @@ services:
       redis:
         condition: service_healthy
 
+  # Background jobs: freshness reminders + auto-expiry (Day 4)
+  worker:
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV: "true"
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/gharkhoji
+      REDIS_URL: redis://redis:6379/0
+    command: python -m app.workers.main
+    restart: on-failure
+    volumes:
+      - ./backend:/app
+    depends_on:
+      api:
+        condition: service_started   # api runs the migrations first
+      redis:
+        condition: service_healthy
+
   db:
     image: postgis/postgis:16-3.4
     environment:

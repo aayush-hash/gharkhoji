@@ -10,6 +10,7 @@ os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
 os.environ["REDIS_URL"] = os.environ.get("TEST_REDIS_URL", "redis://localhost:6379/15")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-that-is-long-enough-1234567890")
 os.environ["STORAGE_BACKEND"] = "local"
+os.environ["PUBLIC_BASE_URL"] = "http://localhost:8000"
 os.environ["MEDIA_ROOT"] = tempfile.mkdtemp(prefix="gharkhoji-test-media-")
 
 import pytest  # noqa: E402

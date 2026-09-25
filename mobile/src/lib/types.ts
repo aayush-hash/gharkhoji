@@ -49,12 +49,16 @@ export interface ListingCard {
   listed_by_role: Role;
   last_confirmed_at: string | null;
   distance_m: number | null;
+  status: ListingStatus;
+  needs_confirmation: boolean;
 }
+
+export type ListingStatus = 'draft' | 'active' | 'rented' | 'expired' | 'removed';
 
 export interface Listing {
   id: string;
   listing_type: ListingType;
-  status: 'draft' | 'active' | 'rented' | 'expired' | 'removed';
+  status: ListingStatus;
   title: string;
   description: string | null;
   deposit: number;
@@ -80,6 +84,39 @@ export interface Listing {
   last_confirmed_at: string | null;
   published_at: string | null;
   created_at: string;
+  // Only present when YOU own the listing:
+  exact_location?: LatLng;
+  photo_slots_left?: number;
+  needs_confirmation?: boolean;
+}
+
+/** Body for creating/updating a listing (matches backend ListingCreate). */
+export interface ListingInput {
+  listing_type: ListingType;
+  title: string;
+  description?: string | null;
+  rent: number;
+  deposit: number;
+  water_charge: number;
+  waste_charge: number;
+  internet_charge: number;
+  parking_charge: number;
+  agent_commission?: number | null;
+  amenities: string[];
+  furnishing: Furnishing;
+  floor?: number | null;
+  max_occupants?: number | null;
+  area: string;
+  landmark?: string | null;
+  lat: number;
+  lng: number;
+}
+
+export interface ListingMeta {
+  listing_types: ListingType[];
+  amenities: string[];
+  furnishing: Furnishing[];
+  max_photos: number;
 }
 
 export interface Place {
@@ -102,6 +139,8 @@ export interface SearchResults {
 
 export interface SearchFilters {
   place?: string;
+  lat?: number;
+  lng?: number;
   radius_km?: number;
   min_rent?: number;
   max_rent?: number;

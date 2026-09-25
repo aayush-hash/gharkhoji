@@ -27,7 +27,21 @@
       "expo-router",
       "expo-secure-store",
       "expo-image",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GharKhoji needs your photos so you can add pictures of your room.",
+          "cameraPermission": "GharKhoji uses the camera so you can photograph your room."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GharKhoji uses your location to show rooms near you and to place your listing on the map."
+        }
+      ],
+      "expo-notifications"
     ],
     "scheme": "gharkhoji",
     "experiments": {

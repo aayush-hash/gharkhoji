@@ -35,7 +35,7 @@ def create_refresh_token(user_id: uuid.UUID, jti: uuid.UUID, expires_at: datetim
 
 def decode_token(token: str, expected_type: TokenType) -> dict[str, Any]:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM], leeway=60)
     except jwt.PyJWTError as exc:
         raise TokenError("Invalid or expired token") from exc
     if payload.get("type") != expected_type:

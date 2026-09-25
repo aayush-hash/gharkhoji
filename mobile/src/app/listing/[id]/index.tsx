@@ -5,12 +5,12 @@ import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-n
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
-import { useListing } from '../../api/hooks';
-import { FreshnessBadge, RoleBadge } from '../../components/badges';
-import { Badge, Button, ErrorView, Loading, SectionTitle } from '../../components/ui';
-import { useAuth } from '../../lib/auth';
-import { formatRs } from '../../lib/format';
-import { colors, radius, space } from '../../lib/theme';
+import { useListing } from '../../../api/hooks';
+import { FreshnessBadge, RoleBadge } from '../../../components/badges';
+import { Badge, Button, ErrorView, Loading, SectionTitle } from '../../../components/ui';
+import { useAuth } from '../../../lib/auth';
+import { formatRs } from '../../../lib/format';
+import { colors, radius, space } from '../../../lib/theme';
 
 export default function ListingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -134,7 +134,15 @@ export default function ListingDetail() {
 
       {/* Contact bar — chat & visit booking arrive after the MVP core */}
       <SafeAreaView edges={['bottom']} style={styles.footer}>
-        {user ? (
+        {l.exact_location ? (
+          // You own this listing
+          <View style={{ flexDirection: 'row', gap: space.sm }}>
+            <Button title={`✏️ ${t('mine.edit')}`} variant="outline" style={{ flex: 1 }}
+              onPress={() => router.push(`/listing/${l.id}/edit`)} />
+            <Button title={`📷 ${t('photos.screenTitle')}`} variant="outline" style={{ flex: 1 }}
+              onPress={() => router.push(`/listing/${l.id}/photos`)} />
+          </View>
+        ) : user ? (
           <Button title={t('listing.contactSoon')} onPress={() => {}} disabled variant="outline" />
         ) : (
           <Button title={t('listing.loginToContact')} onPress={() => router.push('/login')} />

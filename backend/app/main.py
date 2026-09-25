@@ -14,6 +14,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.listings.router import router as listings_router
 from app.modules.media.router import mount_local_files
 from app.modules.media.router import router as media_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.search.router import router as search_router
 from app.modules.users.router import router as users_router
 
@@ -29,7 +30,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version="0.2.0",
+    version="0.4.0",
     lifespan=lifespan,
     # Hide interactive docs in production
     docs_url=None if settings.is_production else "/docs",
@@ -49,6 +50,7 @@ app.include_router(users_router, prefix=settings.API_V1_PREFIX)
 app.include_router(listings_router, prefix=settings.API_V1_PREFIX)
 app.include_router(media_router, prefix=settings.API_V1_PREFIX)
 app.include_router(search_router, prefix=settings.API_V1_PREFIX)
+app.include_router(notifications_router, prefix=settings.API_V1_PREFIX)
 mount_local_files(app)
 
 

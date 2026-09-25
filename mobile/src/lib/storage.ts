@@ -6,6 +6,7 @@ const KEYS = {
   accessToken: 'gk.access_token',
   refreshToken: 'gk.refresh_token',
   language: 'gk.language',
+  pushToken: 'gk.push_token',
 } as const;
 
 type Key = keyof typeof KEYS;

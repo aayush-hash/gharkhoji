@@ -80,7 +80,7 @@ class LocalStorage:
 
     @staticmethod
     def decode_upload_token(token: str) -> dict:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM], leeway=60)
         if payload.get("type") != "upload":
             raise jwt.InvalidTokenError("wrong token type")
         return payload

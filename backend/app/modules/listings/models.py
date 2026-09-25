@@ -1,6 +1,6 @@
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING
 
 from geoalchemy2 import Geography
@@ -121,6 +121,10 @@ class Listing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     last_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     rented_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Freshness reminders (Day 4): reset every time the owner confirms
+    reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reminders_sent: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0", default=0)
 
     owner: Mapped[User] = relationship(lazy="joined")
     photos: Mapped[list["ListingPhoto"]] = relationship(
@@ -147,8 +151,26 @@ class Listing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         return self.rent + self.water_charge + self.waste_charge + self.internet_charge + self.parking_charge
 
     @property
+    def needs_confirmation(self) -> bool:
+        """True when the owner should tap 'Still available' (shown in their app)."""
+        from app.core.config import settings
+
+        if self.status == ListingStatus.EXPIRED:
+            return True
+        if self.status != ListingStatus.ACTIVE or self.last_confirmed_at is None:
+            return False
+        age = datetime.now(UTC) - self.last_confirmed_at
+        return age.total_seconds() >= settings.CONFIRM_REMINDER_AFTER_HOURS * 3600
+
+    @property
     def uploaded_photos(self) -> list["ListingPhoto"]:
         from app.modules.media.models import PhotoStatus
 
         return [p for p in self.photos if p.status == PhotoStatus.UPLOADED]
 
+
+
+# Make sure ListingPhoto is always registered whenever Listing is imported (scripts, workers),
+# otherwise SQLAlchemy can't resolve the `photos` relationship. Safe: media.models only
+# imports Listing for type checking.
+from app.modules.media import models as _media_models  # noqa: E402, F401

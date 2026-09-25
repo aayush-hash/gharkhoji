@@ -4,7 +4,8 @@
     "retry": "Try again",
     "loading": "Loading…",
     "networkError": "Can't reach the server. Check your internet and that the backend is running.",
-    "somethingWrong": "Something went wrong"
+    "somethingWrong": "Something went wrong",
+    "cancel": "Cancel"
   },
   "welcome": {
     "title": "GharKhoji",
@@ -13,7 +14,9 @@
   },
   "tabs": {
     "home": "Home",
-    "profile": "Profile"
+    "profile": "Profile",
+    "map": "Map",
+    "mine": "My listings"
   },
   "home": {
     "title": "Find your room",
@@ -139,5 +142,83 @@
     "language": "Language",
     "logout": "Log out",
     "role": "Account type"
+  },
+  "map": {
+    "count_one": "{{count}} room here",
+    "count_other": "{{count}} rooms here",
+    "open": "View room"
+  },
+  "status": {
+    "draft": "Draft",
+    "active": "Live",
+    "rented": "Rented",
+    "expired": "Hidden – confirm",
+    "removed": "Removed"
+  },
+  "mine": {
+    "title": "My listings",
+    "post": "Post",
+    "loginTitle": "Log in to post and manage your rooms",
+    "needAttention_one": "{{count}} listing needs your confirmation",
+    "needAttention_other": "{{count}} listings need your confirmation",
+    "empty": "No listings yet",
+    "emptyHint": "Tap “+ Post” to list your room for free.",
+    "stillAvailable": "Is this room still available?",
+    "yes": "Yes, available",
+    "rented": "Rented",
+    "confirm": "Still available",
+    "edit": "Edit",
+    "rentedTitle": "Mark as rented?",
+    "rentedText": "It will be hidden from search. You can publish it again later.",
+    "deleteTitle": "Delete this listing?",
+    "deleteText": "This can't be undone."
+  },
+  "post": {
+    "newTitle": "Post a room",
+    "editTitle": "Edit listing",
+    "type": "What are you renting?",
+    "title": "Title",
+    "titlePh": "e.g. Sunny 1BHK near Baneshwor Chowk",
+    "money": "Rent & monthly costs",
+    "chargesHint": "Monthly extra charges — leave empty if included in rent. Tenants see the full total.",
+    "location": "Location",
+    "area": "Area",
+    "landmark": "Nearby landmark",
+    "landmarkPh": "e.g. Behind Civil Hospital",
+    "pinHint": "Tap the map or drag the pin to the exact house.",
+    "privacy": "Tenants only see an approximate location (±200 m).",
+    "useMyLocation": "I'm at the house now",
+    "description": "Description (optional)",
+    "descriptionPh": "Water supply, sunlight, neighbours, rules…",
+    "nextPhotos": "Next: add photos →",
+    "save": "Save changes",
+    "locationDenied": "Location permission is off. Enable it in Settings, or place the pin by hand.",
+    "outsideValley": "Your location is outside Kathmandu Valley. Place the pin by hand.",
+    "errTitle": "At least 5 characters",
+    "errRent": "Enter the monthly rent (Rs 1,000 or more)",
+    "errRequired": "Required (0 if none)",
+    "errArea": "Enter the area",
+    "errPin": "Place the pin on the map",
+    "errCommission": "Agents must state their commission (0 if none)",
+    "fixErrors": "Please fix the highlighted fields."
+  },
+  "photos": {
+    "screenTitle": "Photos",
+    "title": "Add photos",
+    "hint_one": "You can add {{count}} more photo.",
+    "hint_other": "You can add {{count}} more photos.",
+    "cover": "Cover",
+    "uploading": "Uploading {{done}} of {{total}}…",
+    "fromLibrary": "Choose from gallery",
+    "fromCamera": "Take a photo",
+    "tip": "Real, recent photos build trust: bathroom, kitchen, windows, the view. Tap ★ to set the cover photo.",
+    "publish": "Publish",
+    "done": "Done",
+    "published": "Your listing is live!",
+    "someFailed_one": "{{count}} photo failed to upload. Try again.",
+    "someFailed_other": "{{count}} photos failed to upload. Try again.",
+    "permission": "Please allow photo/camera access in Settings.",
+    "deleteTitle": "Delete this photo?",
+    "delete": "Delete"
   }
 }

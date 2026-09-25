@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 
 import { api, registerTokenHandlers } from './api';
+import { unregisterPush } from './push';
 import { storage } from './storage';
 import type { LoginResponse, TokenPair, User } from './types';
 
@@ -50,6 +51,7 @@ export const useAuth = create<AuthState>((set, get) => ({
   setUser: (user) => set({ user }),
 
   signOut: async () => {
+    await unregisterPush(); // needs the access token, so do it first
     const { refreshToken } = get();
     if (refreshToken) {
       api('/auth/logout', { method: 'POST', body: { refresh_token: refreshToken }, auth: false }).catch(() => {});

@@ -1,5 +1,6 @@
 """Day 2: listings, photos and search."""
 import math
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -156,7 +157,7 @@ async def test_photo_upload_flow_and_file_served(client, make_user):
     assert updated["photo_slots_left"] == 7
 
     url = updated["photos"][0]["url"]
-    path = url.split("localhost:8000", 1)[1]
+    path = urlsplit(url).path
     r = await client.get(path)
     assert r.status_code == 200
     assert r.content == PNG

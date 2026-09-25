@@ -1,6 +1,6 @@
 # GharKhoji — Day 1 Guide
 
-> **Day 2 guide → [DAY2.md](DAY2.md)** (listings, photos, search)
+> **Day 2 → [DAY2.md](DAY2.md)** (listings, photos, search) · **Day 3 → [DAY3.md](DAY3.md)** (phone app) · **Day 4 → [DAY4.md](DAY4.md)** (posting, map, freshness)
 
 Goal for today: one command starts the whole backend (API + Postgres/PostGIS + Redis), and you can log in with a phone number through `http://localhost:8000/docs`.
 

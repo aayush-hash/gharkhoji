@@ -136,6 +136,7 @@ class OwnerListingOut(ListingOut):
 
     exact_location: LatLng
     photo_slots_left: int
+    needs_confirmation: bool
 
 
 class ListingCard(BaseModel):
@@ -156,6 +157,8 @@ class ListingCard(BaseModel):
     listed_by_role: UserRole
     last_confirmed_at: datetime | None
     distance_m: int | None = None
+    status: ListingStatus
+    needs_confirmation: bool = False  # only meaningful in the owner's own list
 
 
 class ListingMeta(BaseModel):

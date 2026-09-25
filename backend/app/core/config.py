@@ -44,6 +44,16 @@ class Settings(BaseSettings):
     MAX_PHOTOS_PER_LISTING: int = 8
     MAX_PHOTO_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
+    # Freshness system: owners confirm their listing is still available
+    CONFIRM_REMINDER_AFTER_HOURS: int = 48   # start asking "still available?" after this
+    REMINDER_REPEAT_HOURS: int = 12          # ask again this often while unanswered
+    EXPIRE_AFTER_HOURS: int = 72             # hide from search if not confirmed by then
+    WORKER_INTERVAL_SECONDS: int = 600       # how often the background worker runs
+
+    # Push notifications (Expo push service)
+    EXPO_PUSH_URL: str = "https://exp.host/--/api/v2/push/send"
+    PUSH_ENABLED: bool = True
+
     S3_ENDPOINT_URL: str = ""          # R2: https://<account_id>.r2.cloudflarestorage.com
     S3_REGION: str = "auto"
     S3_ACCESS_KEY: str = ""
