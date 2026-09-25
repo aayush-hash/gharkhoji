@@ -29,3 +29,6 @@ Thumbs.db
 
 # Uploaded photos in development (local storage)
 backend/media_uploads/
+
+# Database backups (personal data — never commit)
+backups/

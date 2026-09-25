@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import MapView, { Circle } from 'react-native-maps';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -13,7 +13,9 @@ import { useTranslation } from 'react-i18next';
 import { useListing } from '../../../api/hooks';
 import { FreshnessBadge, RoleBadge } from '../../../components/badges';
 import { SaveButton } from '../../../components/ListingCard';
-import { Avatar, Badge, Button, ErrorView, IconButton, Skeleton } from '../../../components/ui';
+import { ReportSheet } from '../../../components/ReportSheet';
+import { Avatar, Badge, Button, EmptyState, ErrorView, IconButton, Skeleton } from '../../../components/ui';
+import { ApiError } from '../../../lib/api';
 import { useAuth } from '../../../lib/auth';
 import { formatRs } from '../../../lib/format';
 import { colors, font, radius, shadow, space } from '../../../lib/theme';
@@ -41,6 +43,7 @@ export default function ListingDetail() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const user = useAuth((s) => s.user);
+  const [reportOpen, setReportOpen] = useState(false);
   const query = useListing(id);
   const [photoIndex, setPhotoIndex] = useState(0);
   const heroHeight = Math.min(width * 0.85, 420);
@@ -61,7 +64,18 @@ export default function ListingDetail() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
         <IconButton name="chevron-back" onPress={() => router.back()} style={{ margin: space.lg }} />
-        <ErrorView error={query.error} onRetry={() => query.refetch()} />
+        {query.error instanceof ApiError && query.error.status === 404 ? (
+          // Rented, removed by a moderator, or the owner deleted it
+          <EmptyState
+            icon="home-outline"
+            title={t('listing.goneTitle')}
+            text={t('listing.goneText')}
+            action={t('listing.goneAction')}
+            onAction={() => router.replace('/search')}
+          />
+        ) : (
+          <ErrorView error={query.error} onRetry={() => query.refetch()} />
+        )}
       </SafeAreaView>
     );
   }
@@ -249,8 +263,19 @@ export default function ListingDetail() {
             </View>
             {l.listed_by.phone_verified ? <Ionicons name="shield-checkmark" size={24} color={colors.fresh} /> : null}
           </View>
+
+          {!isMine ? (
+            <Pressable
+              style={styles.reportRow}
+              accessibilityRole="button"
+              onPress={() => (user ? setReportOpen(true) : router.push('/auth/login'))}>
+              <Ionicons name="flag-outline" size={16} color={colors.textMuted} />
+              <Text style={styles.reportText}>{t('report.link')}</Text>
+            </Pressable>
+          ) : null}
         </View>
       </ScrollView>
+      <ReportSheet listingId={l.id} visible={reportOpen} onClose={() => setReportOpen(false)} />
 
       {/* ---------- Sticky bottom bar ---------- */}
       <View style={[styles.footer, shadow(3), { paddingBottom: Math.max(insets.bottom, space.md) }]}>
@@ -369,6 +394,8 @@ const styles = StyleSheet.create({
   owner: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   ownerName: { ...font.h3, color: colors.text },
   ownerRole: { ...font.small, color: colors.textMuted, marginTop: 2 },
+  reportRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: space.lg, marginTop: space.sm },
+  reportText: { ...font.smallStrong, color: colors.textMuted, textDecorationLine: 'underline' },
   footer: {
     position: 'absolute',
     left: 0,

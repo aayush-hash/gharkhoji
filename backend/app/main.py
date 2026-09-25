@@ -3,12 +3,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 import app.models  # noqa: F401  (registers all tables)
 from app.core.config import settings
 from app.core.database import engine
+from app.core.protection import RequestGuard, SecurityHeaders
 from app.core.redis import redis_client
 from app.modules.auth.router import router as auth_router
 from app.modules.chat.router import router as chat_router
@@ -16,6 +18,8 @@ from app.modules.favorites.router import router as favorites_router
 from app.modules.listings.router import router as listings_router
 from app.modules.media.router import mount_local_files
 from app.modules.media.router import router as media_router
+from app.modules.moderation.admin_page import router as admin_page_router
+from app.modules.moderation.router import router as moderation_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.search.router import router as search_router
 from app.modules.users.router import router as users_router
@@ -32,20 +36,27 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    version="0.6.0",
+    version="0.7.0",
     lifespan=lifespan,
     # Hide interactive docs in production
     docs_url=None if settings.is_production else "/docs",
     redoc_url=None,
 )
 
+# Each add_middleware wraps the previous ones, so a request passes through:
+#   TrustedHost (production) → security headers → CORS → size & rate limits → the app
+app.add_middleware(RequestGuard)  # body size limits + per-user/IP rate limit on /api/v1
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=False,  # we use Bearer tokens, never cookies
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+    max_age=600,
 )
+app.add_middleware(SecurityHeaders)
+if settings.is_production:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
 
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(users_router, prefix=settings.API_V1_PREFIX)
@@ -55,6 +66,8 @@ app.include_router(search_router, prefix=settings.API_V1_PREFIX)
 app.include_router(notifications_router, prefix=settings.API_V1_PREFIX)
 app.include_router(favorites_router, prefix=settings.API_V1_PREFIX)
 app.include_router(chat_router, prefix=settings.API_V1_PREFIX)
+app.include_router(moderation_router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin_page_router)  # web panel at /admin
 mount_local_files(app)
 
 

@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useUpdateProfile } from '../../api/hooks';
 import { Avatar, Button, tap } from '../../components/ui';
+import { API_URL } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { usePrefs } from '../../lib/prefs';
 import { colors, font, gradients, radius, shadow, space } from '../../lib/theme';
@@ -113,6 +114,14 @@ export default function Profile() {
                   ]
                 : [{ icon: 'heart' as const, label: t('saved.title'), onPress: () => router.push('/(tabs)/saved') }]),
               { icon: 'key' as const, label: t('changePassword.title'), onPress: () => router.push('/auth/change-password') },
+              ...(user.role === 'admin'
+                ? [{
+                    icon: 'shield-half' as const,
+                    label: t('profile.admin'),
+                    // The admin panel is a web page served by the backend: <server>/admin
+                    onPress: () => Linking.openURL(API_URL.replace(/\/api\/v1$/, '') + '/admin'),
+                  }]
+                : []),
             ]}
           />
         ) : null}

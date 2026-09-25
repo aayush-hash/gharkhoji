@@ -6,5 +6,6 @@ from app.modules.chat.models import ChatReport, Conversation, Message  # noqa: F
 from app.modules.favorites.models import Favorite  # noqa: F401
 from app.modules.listings.models import Listing  # noqa: F401
 from app.modules.media.models import ListingPhoto  # noqa: F401
+from app.modules.moderation.models import AdminAction, ListingReport  # noqa: F401
 from app.modules.notifications.models import PushToken  # noqa: F401
 from app.modules.users.models import User  # noqa: F401

@@ -67,6 +67,8 @@ async def get_visible(db: AsyncSession, listing_id: uuid.UUID, viewer: User | No
         raise ListingError("Listing not found", 404)
     if listing.status != ListingStatus.ACTIVE and not _can_manage(listing, viewer):
         raise ListingError("Listing not found", 404)
+    if not listing.owner.is_active and not (viewer and viewer.role == UserRole.ADMIN):
+        raise ListingError("Listing not found", 404)  # owner suspended by a moderator
     return listing
 
 

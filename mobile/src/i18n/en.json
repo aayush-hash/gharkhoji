@@ -109,7 +109,10 @@
     "loginToContact": "Log in to contact",
     "noHiddenFees": "No hidden fees — this is the full monthly cost",
     "perMonthAll": "per month, all included",
-    "chatSoon": "Chat coming soon"
+    "chatSoon": "Chat coming soon",
+    "goneTitle": "This room isn't available",
+    "goneText": "It may have been rented or removed. Plenty of other rooms are waiting for you.",
+    "goneAction": "Find other rooms"
   },
   "fresh": {
     "confirmed": "Confirmed available {{ago}}",
@@ -210,7 +213,8 @@
     "safetyText": "• Never pay a deposit before visiting the room.\n• Visit with a friend in daylight.\n• Check that the owner's name matches their documents.\n• Report any listing that asks for money in advance.",
     "how": "How GharKhoji works",
     "howText": "Owners confirm their room is still available every 2–3 days. If they don't, it's hidden automatically. Every listing shows the full monthly cost, and agents must show their commission.",
-    "contact": "Contact support"
+    "contact": "Contact support",
+    "admin": "Admin panel"
   },
   "map": {
     "count_one": "{{count}} room here",
@@ -444,5 +448,27 @@
       "Sorry, it's already rented.",
       "Please call me to arrange a visit."
     ]
+  },
+  "report": {
+    "link": "Report this room",
+    "title": "Report this room",
+    "subtitle": "What's wrong with it? Reports are private — the owner never sees who reported.",
+    "reasons": {
+      "fake": "Fake photos or details",
+      "already_rented": "Already rented",
+      "wrong_price": "Price or costs are wrong",
+      "scam": "Asks for money before a visit",
+      "broker": "Agent pretending to be the owner",
+      "offensive": "Offensive content",
+      "other": "Something else"
+    },
+    "detailsPlaceholder": "Tell us more (optional)",
+    "send": "Send report",
+    "private": "False reports can get your account suspended.",
+    "thanksTitle": "Thanks for reporting",
+    "thanksText": "Our team will review this room. You help keep GharKhoji safe for everyone.",
+    "alreadyTitle": "Already reported",
+    "alreadyText": "You've already reported this room. Our team is reviewing it.",
+    "close": "Done"
   }
 }

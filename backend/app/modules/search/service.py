@@ -3,10 +3,11 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from geoalchemy2 import Geography
-from sqlalchemy import cast, func, or_, select
+from sqlalchemy import cast, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.listings.models import Amenity, Furnishing, Listing, ListingStatus, ListingType
+from app.modules.users.models import User
 
 SortOption = Literal["freshness", "price_low", "price_high", "distance", "newest"]
 
@@ -31,7 +32,11 @@ async def search_listings(db: AsyncSession, p: SearchParams) -> tuple[list[tuple
     total_cost = (
         Listing.rent + Listing.water_charge + Listing.waste_charge + Listing.internet_charge + Listing.parking_charge
     )
-    conditions = [Listing.status == ListingStatus.ACTIVE]
+    conditions = [
+        Listing.status == ListingStatus.ACTIVE,
+        # hide rooms of suspended accounts
+        exists().where(User.id == Listing.owner_id, User.is_active.is_(True)),
+    ]
 
     distance = None
     if p.lat is not None and p.lng is not None:

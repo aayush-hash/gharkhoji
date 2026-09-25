@@ -58,6 +58,26 @@ class Settings(BaseSettings):
     EXPIRE_AFTER_HOURS: int = 72             # hide from search if not confirmed by then
     WORKER_INTERVAL_SECONDS: int = 600       # how often the background worker runs
 
+    # SMS (Day 5). console = print codes in the logs (development only)
+    SMS_PROVIDER: Literal["console", "sparrow", "aakash"] = "console"
+    SMS_TIMEOUT_SECONDS: float = 10
+    SPARROW_API_URL: str = "https://api.sparrowsms.com/v2/sms/"
+    SPARROW_TOKEN: str = ""
+    SPARROW_FROM: str = ""             # sender identity given by Sparrow, e.g. "GharKhoji"
+    AAKASH_API_URL: str = "https://sms.aakashsms.com/sms/v3/send"
+    AAKASH_TOKEN: str = ""
+
+    # Security hardening (Day 5)
+    RATE_LIMIT_USER_PER_MINUTE: int = 240   # API calls per logged-in user
+    RATE_LIMIT_IP_PER_MINUTE: int = 600     # per IP (high: mobile networks share IPs)
+    MAX_BODY_BYTES: int = 1_000_000         # JSON requests; photo uploads use MAX_PHOTO_BYTES
+    # Domain names this API answers to in production, e.g. ["api.gharkhoji.com"]
+    ALLOWED_HOSTS: list[str] = ["*"]
+
+    # Reports & moderation (Day 5)
+    REPORTS_PER_DAY: int = 10            # per user, to stop report spam
+    REPORT_ALERT_THRESHOLD: int = 3      # admins get a push when a listing reaches this many open reports
+
     # Push notifications (Expo push service)
     EXPO_PUSH_URL: str = "https://exp.host/--/api/v2/push/send"
     PUSH_ENABLED: bool = True
@@ -75,9 +95,21 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _check_production_secrets(self) -> "Settings":
+        if self.SMS_PROVIDER == "sparrow" and not (self.SPARROW_TOKEN and self.SPARROW_FROM):
+            raise ValueError("SMS_PROVIDER=sparrow needs SPARROW_TOKEN and SPARROW_FROM")
+        if self.SMS_PROVIDER == "aakash" and not self.AAKASH_TOKEN:
+            raise ValueError("SMS_PROVIDER=aakash needs AAKASH_TOKEN")
         if self.is_production:
+            if self.SMS_PROVIDER == "console":
+                raise ValueError("Set SMS_PROVIDER to sparrow or aakash in production")
             if "change-me" in self.SECRET_KEY:
                 raise ValueError("Set a real random SECRET_KEY in production")
+            if "*" in self.CORS_ORIGINS:
+                raise ValueError("CORS_ORIGINS can't be * in production — list your web domains")
+            if "*" in self.ALLOWED_HOSTS:
+                raise ValueError('Set ALLOWED_HOSTS in production, e.g. ["api.gharkhoji.com"]')
+            if not self.PUBLIC_BASE_URL.startswith("https://"):
+                raise ValueError("PUBLIC_BASE_URL must use https:// in production")
             if "postgres:postgres@" in self.DATABASE_URL:
                 raise ValueError("Use a dedicated database user with a strong password in production")
             if "@" not in self.REDIS_URL:

@@ -21,6 +21,7 @@ from redis.asyncio import Redis
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import sms
 from app.core.config import settings
 from app.core.security import (
     TokenError,
@@ -64,10 +65,8 @@ async def _hit_hourly_limit(redis: Redis, key: str, limit: int) -> bool:
 
 
 async def send_sms(phone: str, message: str) -> None:
-    """Development: print to the console. Production: call Sparrow SMS / Aakash SMS here."""
-    if settings.is_production:
-        raise NotImplementedError("Configure an SMS provider before going to production")
-    logger.warning("📱 SMS to %s: %s", phone, message)
+    """Console in development, Sparrow/Aakash SMS in production (see app/core/sms.py)."""
+    await sms.send_sms(phone, message)
 
 
 async def request_otp(db: AsyncSession, redis: Redis, phone: str, purpose: str, client_ip: str) -> None:
@@ -95,7 +94,12 @@ async def request_otp(db: AsyncSession, redis: Redis, phone: str, purpose: str, 
         await pipe.execute()
 
     minutes = settings.OTP_TTL_SECONDS // 60
-    await send_sms(phone, f"Your GharKhoji code is {code}. Valid for {minutes} minutes. Don't share it.")
+    try:
+        await send_sms(phone, f"Your GharKhoji code is {code}. Valid for {minutes} minutes. Don't share it.")
+    except sms.SmsError:
+        # The code never arrived: forget it and let the person try again straight away.
+        await redis.delete(f"otp:code:{purpose}:{phone}", cooldown_key)
+        raise AuthError("We couldn't send the SMS right now. Please try again in a minute.", 503) from None
 
 
 async def check_otp(redis: Redis, phone: str, code: str, purpose: str) -> None:
@@ -251,7 +255,7 @@ async def reset_password(
     _set_password(user, password)
     user.phone_verified_at = user.phone_verified_at or datetime.now(UTC)
     user.last_login_at = datetime.now(UTC)
-    await _revoke_all(db, user.id)  # log out every other phone
+    await revoke_all_sessions(db, user.id)  # log out every other phone
     await _clear_login_failures(redis, phone)
     tokens = await issue_tokens(db, user, user_agent)
     await db.commit()
@@ -271,7 +275,7 @@ async def change_password(
         raise AuthError("Current password is incorrect", 400)
     await _clear_login_failures(redis, user.phone)
     _set_password(user, new)
-    await _revoke_all(db, user.id)
+    await revoke_all_sessions(db, user.id)
     tokens = await issue_tokens(db, user, user_agent)
     await db.commit()
     return tokens
@@ -293,7 +297,8 @@ async def issue_tokens(db: AsyncSession, user: User, user_agent: str | None) -> 
     )
 
 
-async def _revoke_all(db: AsyncSession, user_id: uuid.UUID) -> None:
+async def revoke_all_sessions(db: AsyncSession, user_id: uuid.UUID) -> None:
+    """Logs a user out on every device (used by password reset/change and by moderators)."""
     await db.execute(
         update(RefreshToken)
         .where(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None))
@@ -319,7 +324,7 @@ async def rotate_refresh_token(db: AsyncSession, refresh_token: str, user_agent:
     row = await _load_refresh_row(db, refresh_token)
 
     if row.revoked_at is not None:
-        await _revoke_all(db, row.user_id)
+        await revoke_all_sessions(db, row.user_id)
         await db.commit()
         logger.warning("Refresh token reuse detected for user %s — all sessions revoked", row.user_id)
         raise AuthError("Session expired. Please log in again.", 401)
@@ -340,7 +345,7 @@ async def logout(db: AsyncSession, refresh_token: str, everywhere: bool = False)
     except AuthError:
         return  # logging out with a bad token is a no-op
     if everywhere:
-        await _revoke_all(db, row.user_id)
+        await revoke_all_sessions(db, row.user_id)
     elif row.revoked_at is None:
         row.revoked_at = datetime.now(UTC)
     await db.commit()

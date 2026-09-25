@@ -125,6 +125,9 @@ class Listing(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Freshness reminders (Day 4): reset every time the owner confirms
     reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reminders_sent: Mapped[int] = mapped_column(SmallInteger, nullable=False, server_default="0", default=0)
+    # Moderation (Day 5): set when an admin removes the listing (e.g. reported as fake)
+    moderated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    moderation_reason: Mapped[str | None] = mapped_column(String(300))
 
     owner: Mapped[User] = relationship(lazy="joined")
     photos: Mapped[list["ListingPhoto"]] = relationship(

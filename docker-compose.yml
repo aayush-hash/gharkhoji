@@ -1,13 +1,15 @@
 # Local development stack.
 #   First time only:  ./scripts/generate-secrets.sh     (creates .env with strong random passwords)
 #   Then:             docker compose up --build
+#   Backups of the database are written to ./backups every day (see the "backup" service).
 #
 # Security:
 #   - Postgres and Redis both require passwords (from the .env file next to this one).
 #   - The API connects as "gharkhoji_app", a normal user that owns only the GharKhoji
 #     databases — not the "postgres" superuser.
-#   - Postgres is reachable only from this computer (127.0.0.1), not from your Wi-Fi.
-#     Redis isn't reachable from outside Docker at all.
+#   - Postgres and Redis have no ports open at all: only the api and worker containers
+#     can reach them. To look inside the database:
+#       docker compose exec db psql -U postgres -d gharkhoji
 
 x-backend-env: &backend-env
   # Inside Docker, services reach each other by service name, not "localhost"
@@ -24,7 +26,7 @@ services:
         INSTALL_DEV: "true"
     env_file: ./backend/.env
     environment: *backend-env
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --no-server-header"
     restart: on-failure
     ports:
       - "8000:8000"
@@ -64,6 +66,7 @@ services:
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
       APP_DB_USER: ${APP_DB_USER:-gharkhoji_app}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
+    # no "ports:" — only the api and worker containers can reach the database
     volumes:
       - pgdata:/var/lib/postgresql/data
       # Runs once, on first start: creates the app user and the test database
@@ -75,6 +78,28 @@ services:
       timeout: 3s
       retries: 20
       start_period: 10s
+
+  # Automatic database backups into ./backups (every 24 h, kept 14 days).
+  # Restore: docker compose exec backup bash /restore.sh <file name>
+  backup:
+    image: postgis/postgis:16-3.4   # same Postgres version as "db", so pg_dump matches
+    entrypoint: ["bash", "/backup.sh"]
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: gharkhoji
+      APP_DB_USER: ${APP_DB_USER:-gharkhoji_app}
+      BACKUP_EVERY_HOURS: ${BACKUP_EVERY_HOURS:-24}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - ./backups:/backups
+      - ./backend/scripts/backup.sh:/backup.sh:ro
+      - ./backend/scripts/restore.sh:/restore.sh:ro
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
 
   redis:
     image: redis:7-alpine
